@@ -73,71 +73,89 @@ public class ChessPiece {
 
         switch (type) {
             case KING:
-                addValidMove(validMoves, x + 1, y);
-                addValidMove(validMoves, x - 1, y);
-                addValidMove(validMoves, x, y + 1);
-                addValidMove(validMoves, x, y - 1);
-                addValidMove(validMoves, x + 1, y + 1);
-                addValidMove(validMoves, x - 1, y - 1);
-                addValidMove(validMoves, x + 1, y - 1);
-                addValidMove(validMoves, x - 1, y + 1);
+                addValidMove(validMoves, x + 1, y, board);
+                addValidMove(validMoves, x - 1, y, board);
+                addValidMove(validMoves, x, y + 1, board);
+                addValidMove(validMoves, x, y - 1, board);
+                addValidMove(validMoves, x + 1, y + 1, board);
+                addValidMove(validMoves, x - 1, y - 1, board);
+                addValidMove(validMoves, x + 1, y - 1, board);
+                addValidMove(validMoves, x - 1, y + 1, board);
                 break;
             case QUEEN:
                 for (int i = 1; i < 8; i++) {
-                    addValidMove(validMoves, x + i, y);
-                    addValidMove(validMoves, x - i, y);
-                    addValidMove(validMoves, x, y + i);
-                    addValidMove(validMoves, x, y - i);
-                    addValidMove(validMoves, x + i, y + i);
-                    addValidMove(validMoves, x - i, y - i);
-                    addValidMove(validMoves, x + i, y - i);
-                    addValidMove(validMoves, x - i, y + i);
+                    addValidMove(validMoves, x + i, y, board);
+                    addValidMove(validMoves, x - i, y, board);
+                    addValidMove(validMoves, x, y + i, board);
+                    addValidMove(validMoves, x, y - i, board);
+                    addValidMove(validMoves, x + i, y + i, board);
+                    addValidMove(validMoves, x - i, y - i, board);
+                    addValidMove(validMoves, x + i, y - i, board);
+                    addValidMove(validMoves, x - i, y + i, board);
                 }
                 break;
             case BISHOP:
                 for (int i = 1; i < 8; i++) {
-                    addValidMove(validMoves, x + i, y + i);
-                    addValidMove(validMoves, x - i, y - i);
-                    addValidMove(validMoves, x + i, y - i);
-                    addValidMove(validMoves, x - i, y + i);
+                    addValidMove(validMoves, x + i, y + i, board);
+                    addValidMove(validMoves, x - i, y - i, board);
+                    addValidMove(validMoves, x + i, y - i, board);
+                    addValidMove(validMoves, x - i, y + i, board);
                 }
                 break;
             case KNIGHT:
-                addValidMove(validMoves, x + 2, y + 1);
-                addValidMove(validMoves, x + 2, y - 1);
-                addValidMove(validMoves, x - 2, y + 1);
-                addValidMove(validMoves, x - 2, y - 1);
-                addValidMove(validMoves, x + 1, y + 2);
-                addValidMove(validMoves, x + 1, y - 2);
-                addValidMove(validMoves, x - 1, y + 2);
-                addValidMove(validMoves, x - 1, y - 2);
+                addValidMove(validMoves, x + 2, y + 1, board);
+                addValidMove(validMoves, x + 2, y - 1, board);
+                addValidMove(validMoves, x - 2, y + 1, board);
+                addValidMove(validMoves, x - 2, y - 1, board);
+                addValidMove(validMoves, x + 1, y + 2, board);
+                addValidMove(validMoves, x + 1, y - 2, board);
+                addValidMove(validMoves, x - 1, y + 2, board);
+                addValidMove(validMoves, x - 1, y - 2, board);
                 break;
             case ROOK:
-                for (int i = 1; i < 8; i++) {
-                    addValidMove(validMoves, x + i, y);
-                    addValidMove(validMoves, x - i, y);
-                    addValidMove(validMoves, x, y + i);
-                    addValidMove(validMoves, x, y - i);
+                // Move vertically up
+                for (int i = x + 1; i <= 8; i++) {
+                    if (!addValidMove(validMoves, i, y, board)) break;
+                }
+                // Move vertically down
+                for (int i = x - 1; i >= 1; i--) {
+                    if (!addValidMove(validMoves, i, y, board)) break;
+                }
+                // Move horizontally right
+                for (int i = y + 1; i <= 8; i++) {
+                    if (!addValidMove(validMoves, x, i, board)) break;
+                }
+                // Move horizontally left
+                for (int i = y - 1; i >= 1; i--) {
+                    if (!addValidMove(validMoves, x, i, board)) break;
                 }
                 break;
             case PAWN:
                 int direction = (pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
-                addValidMove(validMoves, x + direction, y);
+                addValidMove(validMoves, x + direction, y, board);
                 if ((pieceColor == ChessGame.TeamColor.WHITE && x == 2) ||
                         (pieceColor == ChessGame.TeamColor.BLACK && x == 7)) {
-                    addValidMove(validMoves, x + 2 * direction, y);
+                    addValidMove(validMoves, x + 2 * direction, y, board);
                 }
                 // Capturing moves
-                addValidMove(validMoves, x + direction, y + 1);
-                addValidMove(validMoves, x + direction, y - 1);
+                addValidMove(validMoves, x + direction, y + 1, board);
+                addValidMove(validMoves, x + direction, y - 1, board);
                 break;
         }
         return validMoves;
     }
 
-    private void addValidMove(Collection<ChessMove> moves, int x, int y) {
+    private boolean addValidMove(Collection<ChessMove> moves, int x, int y, ChessBoard board) {
         if (x >= 1 && x <= 8 && y >= 1 && y <= 8) {
-            moves.add(new ChessMove(new ChessPosition(x, y)));
+            ChessPiece targetPiece = board.getPiece(new ChessPosition(x, y));
+            if (targetPiece == null) {
+                moves.add(new ChessMove(new ChessPosition(x, y)));
+                return true; // Can move further in this direction
+            } else if (targetPiece.getTeamColor() != this.pieceColor) {
+                moves.add(new ChessMove(new ChessPosition(x, y)));
+            }
+            return false; // Stop moving in this direction
         }
+        return false; // Invalid move
     }
 }
