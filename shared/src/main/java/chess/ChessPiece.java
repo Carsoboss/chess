@@ -15,7 +15,7 @@ public class ChessPiece {
     private final ChessGame.TeamColor pieceColor;
     private final PieceType type;
 
-    public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+    public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {
         this.pieceColor = pieceColor;
         this.type = type;
     }
@@ -48,16 +48,14 @@ public class ChessPiece {
     /**
      * @return Which team this chess piece belongs to
      */
-    public ChessGame.TeamColor getTeamColor()
-    {
+    public ChessGame.TeamColor getTeamColor() {
         return pieceColor;
     }
 
     /**
      * @return which type of chess piece this piece is
      */
-    public PieceType getPieceType()
-    {
+    public PieceType getPieceType() {
         return type;
     }
 
@@ -68,7 +66,6 @@ public class ChessPiece {
      *
      * @return Collection of valid moves
      */
-
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> validMoves = new ArrayList<>();
         int x = myPosition.getRow();
@@ -76,18 +73,28 @@ public class ChessPiece {
 
         switch (type) {
             case KING:
-                // King can move 1 in any direction
-                addValidMove(validMoves, x+1, y);
-                addValidMove(validMoves, x-1, y);
-                addValidMove(validMoves, x, y-1);
-                addValidMove(validMoves, x, y+1);
-                addValidMove(validMoves, x+1, y+1);
-                addValidMove(validMoves, x+1, y-1);
-                addValidMove(validMoves, x-1, y+1);
-                addValidMove(validMoves, x-1, y-1);
+                addValidMove(validMoves, x + 1, y);
+                addValidMove(validMoves, x - 1, y);
+                addValidMove(validMoves, x, y + 1);
+                addValidMove(validMoves, x, y - 1);
+                addValidMove(validMoves, x + 1, y + 1);
+                addValidMove(validMoves, x - 1, y - 1);
+                addValidMove(validMoves, x + 1, y - 1);
+                addValidMove(validMoves, x - 1, y + 1);
+                break;
+            case QUEEN:
+                for (int i = 1; i < 8; i++) {
+                    addValidMove(validMoves, x + i, y);
+                    addValidMove(validMoves, x - i, y);
+                    addValidMove(validMoves, x, y + i);
+                    addValidMove(validMoves, x, y - i);
+                    addValidMove(validMoves, x + i, y + i);
+                    addValidMove(validMoves, x - i, y - i);
+                    addValidMove(validMoves, x + i, y - i);
+                    addValidMove(validMoves, x - i, y + i);
+                }
                 break;
             case BISHOP:
-                // Bishop moves diagonally any number of squares
                 for (int i = 1; i < 8; i++) {
                     addValidMove(validMoves, x + i, y + i);
                     addValidMove(validMoves, x - i, y - i);
@@ -95,12 +102,41 @@ public class ChessPiece {
                     addValidMove(validMoves, x - i, y + i);
                 }
                 break;
+            case KNIGHT:
+                addValidMove(validMoves, x + 2, y + 1);
+                addValidMove(validMoves, x + 2, y - 1);
+                addValidMove(validMoves, x - 2, y + 1);
+                addValidMove(validMoves, x - 2, y - 1);
+                addValidMove(validMoves, x + 1, y + 2);
+                addValidMove(validMoves, x + 1, y - 2);
+                addValidMove(validMoves, x - 1, y + 2);
+                addValidMove(validMoves, x - 1, y - 2);
+                break;
+            case ROOK:
+                for (int i = 1; i < 8; i++) {
+                    addValidMove(validMoves, x + i, y);
+                    addValidMove(validMoves, x - i, y);
+                    addValidMove(validMoves, x, y + i);
+                    addValidMove(validMoves, x, y - i);
+                }
+                break;
+            case PAWN:
+                int direction = (pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
+                addValidMove(validMoves, x + direction, y);
+                if ((pieceColor == ChessGame.TeamColor.WHITE && x == 2) ||
+                        (pieceColor == ChessGame.TeamColor.BLACK && x == 7)) {
+                    addValidMove(validMoves, x + 2 * direction, y);
+                }
+                // Capturing moves
+                addValidMove(validMoves, x + direction, y + 1);
+                addValidMove(validMoves, x + direction, y - 1);
+                break;
         }
         return validMoves;
     }
 
     private void addValidMove(Collection<ChessMove> moves, int x, int y) {
-        if (x >= 0 && x < 8 && y >= 0 && y < 8) {
+        if (x >= 1 && x <= 8 && y >= 1 && y <= 8) {
             moves.add(new ChessMove(new ChessPosition(x, y)));
         }
     }
