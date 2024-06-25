@@ -2,6 +2,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Represents a single chess piece
@@ -17,6 +18,19 @@ public class ChessPiece {
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
         this.type = type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChessPiece that = (ChessPiece) o;
+        return pieceColor == that.pieceColor && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pieceColor, type);
     }
 
     /**
@@ -54,7 +68,40 @@ public class ChessPiece {
      *
      * @return Collection of valid moves
      */
+
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return new ArrayList<>();
+        Collection<ChessMove> validMoves = new ArrayList<>();
+        int x = myPosition.getRow();
+        int y = myPosition.getColumn();
+
+        switch (type) {
+            case KING:
+                // King can move 1 in any direction
+                addValidMove(validMoves, x+1, y);
+                addValidMove(validMoves, x-1, y);
+                addValidMove(validMoves, x, y-1);
+                addValidMove(validMoves, x, y+1);
+                addValidMove(validMoves, x+1, y+1);
+                addValidMove(validMoves, x+1, y-1);
+                addValidMove(validMoves, x-1, y+1);
+                addValidMove(validMoves, x-1, y-1);
+                break;
+            case BISHOP:
+                // Bishop moves diagonally any number of squares
+                for (int i = 1; i < 8; i++) {
+                    addValidMove(validMoves, x + i, y + i);
+                    addValidMove(validMoves, x - i, y - i);
+                    addValidMove(validMoves, x + i, y - i);
+                    addValidMove(validMoves, x - i, y + i);
+                }
+                break;
+        }
+        return validMoves;
+    }
+
+    private void addValidMove(Collection<ChessMove> moves, int x, int y) {
+        if (x >= 0 && x < 8 && y >= 0 && y < 8) {
+            moves.add(new ChessMove(new ChessPosition(x, y)));
+        }
     }
 }
