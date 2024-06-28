@@ -4,12 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- * Represents a single chess piece
- * <p>
- * Note: You can add to this class, but you may not alter
- * signature of the existing methods.
- */
 public class ChessPiece {
 
     private final ChessGame.TeamColor pieceColor;
@@ -33,9 +27,6 @@ public class ChessPiece {
         return Objects.hash(pieceColor, type);
     }
 
-    /**
-     * The various different chess piece options
-     */
     public enum PieceType {
         KING,
         QUEEN,
@@ -45,27 +36,14 @@ public class ChessPiece {
         PAWN
     }
 
-    /**
-     * @return Which team this chess piece belongs to
-     */
     public ChessGame.TeamColor getTeamColor() {
         return pieceColor;
     }
 
-    /**
-     * @return which type of chess piece this piece is
-     */
     public PieceType getPieceType() {
         return type;
     }
 
-    /**
-     * Calculates all the positions a chess piece can move to
-     * Does not take into account moves that are illegal due to leaving the king in
-     * danger
-     *
-     * @return Collection of valid moves
-     */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> validMoves = new ArrayList<>();
         int x = myPosition.getRow();
@@ -73,89 +51,162 @@ public class ChessPiece {
 
         switch (type) {
             case KING:
-                addValidMove(validMoves, x + 1, y, board);
-                addValidMove(validMoves, x - 1, y, board);
-                addValidMove(validMoves, x, y + 1, board);
-                addValidMove(validMoves, x, y - 1, board);
-                addValidMove(validMoves, x + 1, y + 1, board);
-                addValidMove(validMoves, x - 1, y - 1, board);
-                addValidMove(validMoves, x + 1, y - 1, board);
-                addValidMove(validMoves, x - 1, y + 1, board);
+                addValidMove(validMoves, x + 1, y, myPosition, board);
+                addValidMove(validMoves, x - 1, y, myPosition, board);
+                addValidMove(validMoves, x, y + 1, myPosition, board);
+                addValidMove(validMoves, x, y - 1, myPosition, board);
+                addValidMove(validMoves, x + 1, y + 1, myPosition, board);
+                addValidMove(validMoves, x - 1, y - 1, myPosition, board);
+                addValidMove(validMoves, x + 1, y - 1, myPosition, board);
+                addValidMove(validMoves, x - 1, y + 1, myPosition, board);
                 break;
             case QUEEN:
                 for (int i = 1; i < 8; i++) {
-                    addValidMove(validMoves, x + i, y, board);
-                    addValidMove(validMoves, x - i, y, board);
-                    addValidMove(validMoves, x, y + i, board);
-                    addValidMove(validMoves, x, y - i, board);
-                    addValidMove(validMoves, x + i, y + i, board);
-                    addValidMove(validMoves, x - i, y - i, board);
-                    addValidMove(validMoves, x + i, y - i, board);
-                    addValidMove(validMoves, x - i, y + i, board);
+                    if (!addValidMove(validMoves, x + i, y, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x - i, y, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x, y + i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x, y - i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x + i, y + i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x - i, y - i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x + i, y - i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x - i, y + i, myPosition, board)) break;
                 }
                 break;
             case BISHOP:
                 for (int i = 1; i < 8; i++) {
-                    addValidMove(validMoves, x + i, y + i, board);
-                    addValidMove(validMoves, x - i, y - i, board);
-                    addValidMove(validMoves, x + i, y - i, board);
-                    addValidMove(validMoves, x - i, y + i, board);
+                    if (!addValidMove(validMoves, x + i, y + i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x - i, y - i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x + i, y - i, myPosition, board)) break;
+                }
+                for (int i = 1; i < 8; i++) {
+                    if (!addValidMove(validMoves, x - i, y + i, myPosition, board)) break;
                 }
                 break;
             case KNIGHT:
-                addValidMove(validMoves, x + 2, y + 1, board);
-                addValidMove(validMoves, x + 2, y - 1, board);
-                addValidMove(validMoves, x - 2, y + 1, board);
-                addValidMove(validMoves, x - 2, y - 1, board);
-                addValidMove(validMoves, x + 1, y + 2, board);
-                addValidMove(validMoves, x + 1, y - 2, board);
-                addValidMove(validMoves, x - 1, y + 2, board);
-                addValidMove(validMoves, x - 1, y - 2, board);
+                addValidMove(validMoves, x + 2, y + 1, myPosition, board);
+                addValidMove(validMoves, x + 2, y - 1, myPosition, board);
+                addValidMove(validMoves, x - 2, y + 1, myPosition, board);
+                addValidMove(validMoves, x - 2, y - 1, myPosition, board);
+                addValidMove(validMoves, x + 1, y + 2, myPosition, board);
+                addValidMove(validMoves, x + 1, y - 2, myPosition, board);
+                addValidMove(validMoves, x - 1, y + 2, myPosition, board);
+                addValidMove(validMoves, x - 1, y - 2, myPosition, board);
                 break;
             case ROOK:
-                // Move vertically up
                 for (int i = x + 1; i <= 8; i++) {
-                    if (!addValidMove(validMoves, i, y, board)) break;
+                    if (!addValidMove(validMoves, i, y, myPosition, board)) break;
                 }
-                // Move vertically down
                 for (int i = x - 1; i >= 1; i--) {
-                    if (!addValidMove(validMoves, i, y, board)) break;
+                    if (!addValidMove(validMoves, i, y, myPosition, board)) break;
                 }
-                // Move horizontally right
                 for (int i = y + 1; i <= 8; i++) {
-                    if (!addValidMove(validMoves, x, i, board)) break;
+                    if (!addValidMove(validMoves, x, i, myPosition, board)) break;
                 }
-                // Move horizontally left
                 for (int i = y - 1; i >= 1; i--) {
-                    if (!addValidMove(validMoves, x, i, board)) break;
+                    if (!addValidMove(validMoves, x, i, myPosition, board)) break;
                 }
                 break;
             case PAWN:
                 int direction = (pieceColor == ChessGame.TeamColor.WHITE) ? 1 : -1;
-                addValidMove(validMoves, x + direction, y, board);
-                if ((pieceColor == ChessGame.TeamColor.WHITE && x == 2) ||
-                        (pieceColor == ChessGame.TeamColor.BLACK && x == 7)) {
-                    addValidMove(validMoves, x + 2 * direction, y, board);
+                // Single move forward
+                if (addValidPawnMove(validMoves, x + direction, y, myPosition, board, false)) {
+                    // Double move forward on initial position
+                    if ((pieceColor == ChessGame.TeamColor.WHITE && x == 2) ||
+                            (pieceColor == ChessGame.TeamColor.BLACK && x == 7)) {
+                        addValidPawnMove(validMoves, x + 2 * direction, y, myPosition, board, false);
+                    }
                 }
-                // Capturing moves
-                addValidMove(validMoves, x + direction, y + 1, board);
-                addValidMove(validMoves, x + direction, y - 1, board);
+                // Capture moves
+                addValidPawnMove(validMoves, x + direction, y + 1, myPosition, board, true);
+                addValidPawnMove(validMoves, x + direction, y - 1, myPosition, board, true);
+                // Promotion check
+                if ((pieceColor == ChessGame.TeamColor.WHITE && x == 7) ||
+                        (pieceColor == ChessGame.TeamColor.BLACK && x == 2)) {
+                    addPromotionMoves(validMoves, x + direction, y, myPosition, board, false);
+                    addPromotionMoves(validMoves, x + direction, y + 1, myPosition, board, true);
+                    addPromotionMoves(validMoves, x + direction, y - 1, myPosition, board, true);
+                }
                 break;
         }
         return validMoves;
     }
 
-    private boolean addValidMove(Collection<ChessMove> moves, int x, int y, ChessBoard board) {
+    private boolean addValidMove(Collection<ChessMove> moves, int x, int y, ChessPosition startPosition, ChessBoard board) {
+        if (x >= 1 && x <= 8 && y >= 1 && y <= 8) { // Check if the position is within the board bounds
+            ChessPiece targetPiece = board.getPiece(new ChessPosition(x, y));
+            if (targetPiece == null) { // If the target position is empty
+                moves.add(new ChessMove(startPosition, new ChessPosition(x, y), null)); // Add the move to the valid moves
+                return true; // Continue adding moves in this direction
+            } else if (targetPiece.getTeamColor() != this.pieceColor) { // If the target position has an opponent's piece
+                moves.add(new ChessMove(startPosition, new ChessPosition(x, y), null)); // Add the capture move to the valid moves
+                return false; // Stop adding moves in this direction since a capture occurred
+            } else { // If the target position has a friendly piece
+                return false; // Stop adding moves in this direction
+            }
+        }
+        return false; // Stop if the position is outside the board bounds
+    }
+
+    private boolean addValidPawnMove(Collection<ChessMove> moves, int x, int y, ChessPosition startPosition, ChessBoard board, boolean isCapture) {
         if (x >= 1 && x <= 8 && y >= 1 && y <= 8) {
             ChessPiece targetPiece = board.getPiece(new ChessPosition(x, y));
-            if (targetPiece == null) {
-                moves.add(new ChessMove(new ChessPosition(x, y)));
-                return true; // Can move further in this direction
-            } else if (targetPiece.getTeamColor() != this.pieceColor) {
-                moves.add(new ChessMove(new ChessPosition(x, y)));
+            if (!isCapture && targetPiece == null) {
+                if (isPromotionRow(x)) {
+                    addAllPromotions(moves, startPosition, new ChessPosition(x, y));
+                } else {
+                    moves.add(new ChessMove(startPosition, new ChessPosition(x, y), null));
+                }
+                return true;
+            } else if (isCapture && targetPiece != null && targetPiece.getTeamColor() != this.pieceColor) {
+                if (isPromotionRow(x)) {
+                    addAllPromotions(moves, startPosition, new ChessPosition(x, y));
+                } else {
+                    moves.add(new ChessMove(startPosition, new ChessPosition(x, y), null));
+                }
+                return true;
             }
-            return false; // Stop moving in this direction
         }
-        return false; // Invalid move
+        return false;
+    }
+
+    private void addPromotionMoves(Collection<ChessMove> moves, int x, int y, ChessPosition startPosition, ChessBoard board, boolean isCapture) {
+        if (x >= 1 && x <= 8 && y >= 1 && y <= 8) {
+            ChessPiece targetPiece = board.getPiece(new ChessPosition(x, y));
+            if (!isCapture && targetPiece == null) {
+                addAllPromotions(moves, startPosition, new ChessPosition(x, y));
+            } else if (isCapture && targetPiece != null && targetPiece.getTeamColor() != this.pieceColor) {
+                addAllPromotions(moves, startPosition, new ChessPosition(x, y));
+            }
+        }
+    }
+
+    private void addAllPromotions(Collection<ChessMove> moves, ChessPosition startPosition, ChessPosition endPosition) {
+        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.QUEEN));
+        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.ROOK));
+        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.BISHOP));
+        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.KNIGHT));
+    }
+
+    private boolean isPromotionRow(int row) {
+        return (pieceColor == ChessGame.TeamColor.WHITE && row == 8) ||
+                (pieceColor == ChessGame.TeamColor.BLACK && row == 1);
     }
 }
