@@ -46,7 +46,7 @@ public class ChessGame {
     }
 
     /**
-     * Gets a valid moves for a piece at the given location
+     * Gets valid moves for a piece at the given location
      *
      * @param startPosition the piece to get valid moves for
      * @return Set of valid moves for requested piece, or null if no piece at
@@ -72,7 +72,6 @@ public class ChessGame {
         }
         return null;
     }
-
 
     /**
      * Makes a move in a chess game
@@ -112,7 +111,7 @@ public class ChessGame {
         }
 
         // Handle pawn promotion
-        if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 0 || endPosition.getRow() == 7)) {
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 1 || endPosition.getRow() == 8)) {
             ChessPiece.PieceType promotionType = move.getPromotionPiece();
             if (promotionType == null) {
                 throw new InvalidMoveException("Pawn promotion type required");
@@ -150,6 +149,17 @@ public class ChessGame {
         return false;
     }
 
+    private ChessPosition findKingPosition(TeamColor teamColor) {
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(row, col));
+                if (piece != null && piece.getTeamColor() == teamColor && piece.getPieceType() == ChessPiece.PieceType.KING) {
+                    return new ChessPosition(row, col);
+                }
+            }
+        }
+        return null; // King not found on the board
+    }
 
     /**
      * Determines if the given team is in check
@@ -160,7 +170,7 @@ public class ChessGame {
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPosition = findKingPosition(teamColor);
         if (kingPosition == null) {
-            throw new IllegalStateException("King is missing from the board");
+            return false; // Gracefully handle case where king is not found
         }
 
         for (int row = 1; row <= 8; row++) {
@@ -179,17 +189,6 @@ public class ChessGame {
         return false;
     }
 
-    private ChessPosition findKingPosition(TeamColor teamColor) {
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPiece piece = board.getPiece(new ChessPosition(row, col));
-                if (piece != null && piece.getTeamColor() == teamColor && piece.getPieceType() == ChessPiece.PieceType.KING) {
-                    return new ChessPosition(row, col);
-                }
-            }
-        }
-        return null; // King not found on the board
-    }
     /**
      * Determines if the given team is in checkmate
      *
