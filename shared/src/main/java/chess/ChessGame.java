@@ -129,8 +129,25 @@ public class ChessGame {
     }
 
     private boolean isKingInCheck(TeamColor teamColor) {
-        // Implement logic to check if the king of the given team color is in check
-        return false; // Placeholder return, implement the actual check logic here
+        ChessPosition kingPosition = findKingPosition(teamColor);
+        if (kingPosition == null) {
+            return false; // King not on the board, can't be in check
+        }
+
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(row, col));
+                if (piece != null && piece.getTeamColor() != teamColor) {
+                    Collection<ChessMove> moves = piece.pieceMoves(board, new ChessPosition(row, col));
+                    for (ChessMove move : moves) {
+                        if (move.getEndPosition().equals(kingPosition)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 
@@ -171,7 +188,7 @@ public class ChessGame {
                 }
             }
         }
-        return null;
+        return null; // King not found on the board
     }
     /**
      * Determines if the given team is in checkmate
