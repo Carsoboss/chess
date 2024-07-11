@@ -1,6 +1,8 @@
 package chess;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -53,10 +55,24 @@ public class ChessGame {
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
         if (piece != null) {
-            return piece.pieceMoves(board, startPosition);
+            Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
+            Collection<ChessMove> validMoves = new HashSet<>(possibleMoves);
+
+            Iterator<ChessMove> it = validMoves.iterator();
+            while (it.hasNext()) {
+                ChessMove move = it.next();
+                ChessBoard copyBoard = copyBoardWithMove(move);
+                ChessGame copyGame = new ChessGame();
+                copyGame.setBoard(copyBoard);
+                if (copyGame.isInCheck(piece.getTeamColor())) {
+                    it.remove();
+                }
+            }
+            return validMoves;
         }
         return null;
     }
+
 
     /**
      * Makes a move in a chess game
