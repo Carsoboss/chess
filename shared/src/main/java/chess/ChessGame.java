@@ -66,10 +66,16 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPosition startPosition = move.getStartPosition();
+        ChessPosition endPosition = move.getEndPosition();
         ChessPiece piece = board.getPiece(startPosition);
 
         if (piece == null) {
             throw new InvalidMoveException("No piece at start position");
+        }
+
+        // Check if the move is made by the correct team
+        if (piece.getTeamColor() != currentTurn) {
+            throw new InvalidMoveException("Not your turn");
         }
 
         Collection<ChessMove> validMoves = validMoves(startPosition);
@@ -78,13 +84,39 @@ public class ChessGame {
             throw new InvalidMoveException("Invalid move");
         }
 
-        // Update the board
-        board.addPiece(move.getEndPosition(), piece);
+        // Simulate the move to check for leaving the king in check
+        board.addPiece(endPosition, piece);
+        board.addPiece(startPosition, null); // Clear the start position
+
+        if (isKingInCheck(currentTurn)) {
+            // Revert the move
+            board.addPiece(startPosition, piece);
+            board.addPiece(endPosition, null);
+            throw new InvalidMoveException("Move leaves king in check");
+        }
+
+        // Handle pawn promotion
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN && (endPosition.getRow() == 0 || endPosition.getRow() == 7)) {
+            ChessPiece.PieceType promotionType = move.getPromotionPiece();
+            if (promotionType == null) {
+                throw new InvalidMoveException("Pawn promotion type required");
+            }
+            piece = new ChessPiece(currentTurn, promotionType);
+        }
+
+        // Perform the move
+        board.addPiece(endPosition, piece);
         board.addPiece(startPosition, null); // Clear the start position
 
         // Switch turns
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
+
+    private boolean isKingInCheck(TeamColor teamColor) {
+        // Implement logic to check if the king of the given team color is in check
+        return false; // Placeholder return, implement the actual check logic here
+    }
+
 
     /**
      * Determines if the given team is in check
