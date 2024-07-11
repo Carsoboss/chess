@@ -199,10 +199,10 @@ public class ChessPiece {
     }
 
     private void addAllPromotions(Collection<ChessMove> moves, ChessPosition startPosition, ChessPosition endPosition) {
-        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.QUEEN));
-        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.ROOK));
-        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.BISHOP));
-        moves.add(new ChessMove(startPosition, endPosition, ChessPiece.PieceType.KNIGHT));
+        moves.add(new ChessMove(startPosition, endPosition, PieceType.QUEEN));
+        moves.add(new ChessMove(startPosition, endPosition, PieceType.ROOK));
+        moves.add(new ChessMove(startPosition, endPosition, PieceType.BISHOP));
+        moves.add(new ChessMove(startPosition, endPosition, PieceType.KNIGHT));
     }
 
     private boolean isPromotionRow(int row) {
