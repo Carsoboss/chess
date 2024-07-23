@@ -1,47 +1,67 @@
 package service;
 
-import dataaccess.UserDAO;
-import dataaccess.AuthDAO;
+import dataaccess.AuthDataAccess;
 import dataaccess.DataAccessException;
-import model.UserData;
+import dataaccess.UserDataAccess;
 import model.AuthData;
+import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
+import requestresult.*;
 
-import java.util.UUID;
+public class UserService extends Service {
+    private final UserDataAccess userDataAccess;
 
-public class UserService {
-    private final UserDAO userDAO;
-    private final AuthDAO authDAO;
-
-    public UserService(UserDAO userDAO, AuthDAO authDAO) {
-        this.userDAO = userDAO;
-        this.authDAO = authDAO;
+    public UserService(UserDataAccess userDataAccess, AuthDataAccess authDataAccess) {
+        super(authDataAccess);
+        this.userDataAccess = userDataAccess;
     }
 
-    public AuthData register(UserData user) throws DataAccessException {
-        userDAO.insertUser(user);
-        String authToken = UUID.randomUUID().toString();
-        AuthData auth = new AuthData(authToken, user.username());
-        authDAO.createAuth(auth);
-        return auth;
+    public RegisterResult register(RegisterRequest request) throws DataAccessException {
+        nullCheck(request);
+        nullCheck(request.username());
+        nullCheck(request.password());
+        nullCheck(request.email());
+
+        String hashedPassword = BCrypt.hashpw(request.password(), BCrypt.gensalt());
+
+        UserData newUser = new UserData(request.username(), hashedPassword, request.email());
+        userDataAccess.addUser(newUser);
+
+        AuthData newAuth = authDataAccess.createAuth(request.username());
+
+        return new RegisterResult(request.username(), newAuth.authToken());
     }
 
-    public AuthData login(UserData user) throws DataAccessException {
-        UserData storedUser = userDAO.getUser(user.username());
-        if (!storedUser.password().equals(user.password())) {
-            throw new DataAccessException("Unauthorized");
+    public int getNumUsers() throws DataAccessException {
+        return this.userDataAccess.getNumUsers();
+    }
+
+    public LoginResult login(LoginRequest request) throws DataAccessException {
+        nullCheck(request);
+        nullCheck(request.username());
+        nullCheck(request.password());
+
+        // check for wrong username/password combo
+        UserData user = this.userDataAccess.getUser(request.username());
+        if (user == null) {
+            throw new DataAccessException("unauthorized");
         }
-        String authToken = UUID.randomUUID().toString();
-        AuthData auth = new AuthData(authToken, user.username());
-        authDAO.createAuth(auth);
-        return auth;
+        if (!BCrypt.checkpw(request.password(), user.password())) {
+            throw new DataAccessException("unauthorized");
+        }
+
+
+        // perform log-in
+        AuthData auth = this.authDataAccess.createAuth(user.username());
+        return new LoginResult(user.username(), auth.authToken());
     }
 
-    public void logout(String authToken) throws DataAccessException {
-        authDAO.deleteAuth(authToken);
-    }
+    public LogoutResult logout(LogoutRequest request) throws DataAccessException {
+        nullCheck(request);
 
-    public void clear() {
-        userDAO.clear();
-        authDAO.clear();
+        // perform log-out
+        authenticate(request.authToken());
+        authDataAccess.deleteAuth(request.authToken());
+        return new LogoutResult();
     }
 }

@@ -1,46 +1,49 @@
 package service;
 
-import dataaccess.GameDAO;
+import dataaccess.AuthDataAccess;
 import dataaccess.DataAccessException;
+import dataaccess.GameDataAccess;
+import model.AuthData;
 import model.GameData;
+import requestresult.*;
 
-import java.util.List;
+import java.util.Collection;
 
-public class GameService {
-    private final GameDAO gameDAO;
+public class GameService extends Service {
+    private final GameDataAccess gameDataAccess;
 
-    public GameService(GameDAO gameDAO) {
-        this.gameDAO = gameDAO;
+    public GameService(AuthDataAccess authDataAccess, GameDataAccess gameDataAccess) {
+        super(authDataAccess);
+        this.gameDataAccess = gameDataAccess;
     }
 
-    public GameData createGame(String gameName) {
-        return gameDAO.createGame(gameName);
+    public ListResult list(ListRequest request) throws DataAccessException {
+        nullCheck(request);
+
+        authenticate(request.authToken());
+
+        Collection<GameData> games = gameDataAccess.listAllGames();
+        return new ListResult(games);
     }
 
-    public List<GameData> listGames() {
-        return List.copyOf(gameDAO.games.values());
+    public CreateResult create(CreateRequest request) throws DataAccessException{
+        nullCheck(request);
+        nullCheck(request.gameName());
+
+        authenticate(request.authToken());
+
+        GameData game = gameDataAccess.createGame(request.gameName());
+        return new CreateResult(game.gameID());
     }
 
-    public GameData joinGame(int gameID, String playerColor, String username) throws DataAccessException {
-        GameData game = gameDAO.getGame(gameID);
-        if (playerColor.equals("WHITE")) {
-            if (game.whiteUsername() != null) {
-                throw new DataAccessException("Color already taken");
-            }
-            game = new GameData(game.gameID(), username, game.blackUsername(), game.gameName(), game.game());
-        } else if (playerColor.equals("BLACK")) {
-            if (game.blackUsername() != null) {
-                throw new DataAccessException("Color already taken");
-            }
-            game = new GameData(game.gameID(), game.whiteUsername(), username, game.gameName(), game.game());
-        } else {
-            throw new DataAccessException("Invalid color");
-        }
-        gameDAO.games.put(gameID, game);
-        return game;
-    }
+    public JoinResult join(JoinRequest request) throws DataAccessException {
+        nullCheck(request);
+        nullCheck(request.playerColor());
+        nullCheck(request.gameID());
 
-    public void clear() {
-        gameDAO.clear();
+        AuthData auth = authenticate(request.authToken());
+
+        gameDataAccess.joinGame(request.playerColor(), request.gameID(), auth.username());
+        return new JoinResult();
     }
 }
