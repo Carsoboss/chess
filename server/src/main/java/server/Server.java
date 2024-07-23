@@ -1,25 +1,33 @@
 package server;
 
-import spark.*;
+import static spark.Spark.*;
 
 public class Server {
 
     public int run(int desiredPort) {
-        Spark.port(desiredPort);
+        port(desiredPort);
 
-        Spark.staticFiles.location("web");
+        // Configure static files location
+        staticFiles.location("/web");
 
-        // Register your endpoints and handle exceptions here.
+        // Register endpoints
+        get("/", (req, res) -> {
+            res.type("text/html");
+            return "<h1>Welcome to the 240 Chess Server</h1>";
+        });
 
-        //This line initializes the server and can be removed once you have a functioning endpoint 
-        Spark.init();
+        // Additional example endpoint
+        get("/hello", (req, res) -> "Hello, World!");
 
-        Spark.awaitInitialization();
-        return Spark.port();
+        // Initialize the server
+        init();
+
+        awaitInitialization();
+        return port();
     }
 
     public void stop() {
-        Spark.stop();
-        Spark.awaitStop();
+        stop();
+        awaitStop();
     }
 }
