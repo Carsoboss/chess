@@ -1,9 +1,9 @@
 package requestresult;
 
-public class LogoutRequest {
+public class ListGamesRequest {
     private final String authToken;
 
-    public LogoutRequest(String authToken) {
+    public ListGamesRequest(String authToken) {
         this.authToken = authToken;
     }
 
