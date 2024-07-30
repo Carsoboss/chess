@@ -1,7 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.DAOFactory;
+import dataaccess.ServiceException;
 import requestresult.*;
 import service.ClearService;
 import service.GameService;
@@ -10,7 +10,6 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class Server {
@@ -20,7 +19,6 @@ public class Server {
     private static final int SUCCESS_STATUS = 200;
 
     public Server() {
-        DAOFactory daoFactory = DAOFactory.getInstance();
         this.userService = new UserService();
         this.gameService = new GameService();
         this.clearService = new ClearService();
@@ -112,3 +110,4 @@ public class Server {
         return new Gson().toJson(joinResponse);
     }
 }
+ 

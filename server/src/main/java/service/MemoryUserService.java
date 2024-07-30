@@ -24,10 +24,13 @@ public class MemoryUserService implements IUserService {
         String hashedPassword = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
         UserData newUser = new UserData(request.getUsername(), hashedPassword, request.getEmail());
 
-        daoFactory.getUserDAO().addUser(newUser);
-        AuthData newAuth = daoFactory.getAuthDAO().createAuthToken(request.getUsername());
-
-        return new RegisterUserResponse(request.getUsername(), newAuth.getAuthToken());
+        try {
+            daoFactory.getUserDAO().addUser(newUser);
+            AuthData newAuth = daoFactory.getAuthDAO().createAuthToken(request.getUsername());
+            return new RegisterUserResponse(request.getUsername(), newAuth.getAuthToken());
+        } catch (Exception e) {
+            throw new ServiceException("Error registering user", e);
+        }
     }
 
     @Override
@@ -36,21 +39,29 @@ public class MemoryUserService implements IUserService {
         validateString(request.getUsername());
         validateString(request.getPassword());
 
-        UserData user = daoFactory.getUserDAO().getUser(request.getUsername());
-        if (user == null || !BCrypt.checkpw(request.getPassword(), user.getPassword())) {
-            throw new ServiceException("Unauthorized");
-        }
+        try {
+            UserData user = daoFactory.getUserDAO().getUser(request.getUsername());
+            if (user == null || !BCrypt.checkpw(request.getPassword(), user.getPassword())) {
+                throw new ServiceException("Unauthorized");
+            }
 
-        AuthData authData = daoFactory.getAuthDAO().createAuthToken(user.getUsername());
-        return new LoginResponse(user.getUsername(), authData.getAuthToken());
+            AuthData authData = daoFactory.getAuthDAO().createAuthToken(user.getUsername());
+            return new LoginResponse(user.getUsername(), authData.getAuthToken());
+        } catch (Exception e) {
+            throw new ServiceException("Error logging in user", e);
+        }
     }
 
     @Override
     public LogoutResponse logoutUser(LogoutRequest request) throws ServiceException {
         validateRequest(request);
-        authenticateUser(request.getAuthToken());
-        daoFactory.getAuthDAO().removeAuthToken(request.getAuthToken());
-        return new LogoutResponse();
+        try {
+            authenticateUser(request.getAuthToken());
+            daoFactory.getAuthDAO().removeAuthToken(request.getAuthToken());
+            return new LogoutResponse();
+        } catch (Exception e) {
+            throw new ServiceException("Error logging out user", e);
+        }
     }
 
     private void validateRequest(Object request) throws ServiceException {

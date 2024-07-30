@@ -11,7 +11,7 @@ public class MemoryUserDAO implements IUserDAO {
 
     @Override
     public void addUser(UserData user) throws DAOException {
-        if (users.values().stream().anyMatch(u -> u.username().equals(user.username()))) {
+        if (users.values().stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
             throw new DAOException("Username already taken");
         }
         users.put(nextId++, user);
@@ -20,7 +20,7 @@ public class MemoryUserDAO implements IUserDAO {
     @Override
     public UserData getUser(String username) {
         return users.values().stream()
-                .filter(user -> user.username().equals(username))
+                .filter(user -> user.getUsername().equals(username))
                 .findFirst()
                 .orElse(null);
     }

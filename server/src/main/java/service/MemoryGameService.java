@@ -19,8 +19,12 @@ public class MemoryGameService implements IGameService {
         validateRequest(request);
         authenticateUser(request.getAuthToken());
 
-        Collection<GameData> games = daoFactory.getGameDAO().getAllGames();
-        return new ListGamesResponse(games);
+        try {
+            Collection<GameData> games = daoFactory.getGameDAO().getAllGames();
+            return new ListGamesResponse(games);
+        } catch (Exception e) {
+            throw new ServiceException("Error listing games", e);
+        }
     }
 
     @Override
@@ -30,8 +34,12 @@ public class MemoryGameService implements IGameService {
 
         authenticateUser(request.getAuthToken());
 
-        GameData game = daoFactory.getGameDAO().createGame(request.getGameName());
-        return new CreateGameResponse(game.getGameID());
+        try {
+            GameData game = daoFactory.getGameDAO().createGame(request.getGameName());
+            return new CreateGameResponse(game.getGameID());
+        } catch (Exception e) {
+            throw new ServiceException("Error creating game", e);
+        }
     }
 
     @Override
@@ -42,8 +50,12 @@ public class MemoryGameService implements IGameService {
 
         AuthData authData = authenticateUser(request.getAuthToken());
 
-        daoFactory.getGameDAO().addPlayerToGame(request.getPlayerColor(), request.getGameId(), authData.getUsername());
-        return new JoinGameResponse();
+        try {
+            daoFactory.getGameDAO().addPlayerToGame(request.getPlayerColor(), request.getGameId(), authData.getUsername());
+            return new JoinGameResponse();
+        } catch (Exception e) {
+            throw new ServiceException("Error joining game", e);
+        }
     }
 
     private void validateRequest(Object request) throws ServiceException {
@@ -76,3 +88,4 @@ public class MemoryGameService implements IGameService {
         }
     }
 }
+

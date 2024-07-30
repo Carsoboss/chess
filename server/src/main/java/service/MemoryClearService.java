@@ -15,7 +15,7 @@ public class MemoryClearService implements IClearService {
     public ClearResponse clearAll() throws ServiceException {
         try {
             daoFactory.getUserDAO().deleteAllUsers();
-            daoFactory.getAuthDAO().deleteAllAuthTokens();
+            daoFactory.getAuthDAO().removeAllAuthTokens();
             daoFactory.getGameDAO().deleteAllGames();
             return new ClearResponse();
         } catch (Exception e) {

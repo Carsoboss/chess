@@ -21,16 +21,18 @@ public class MemoryAuthDAO implements IAuthDAO {
     }
 
     @Override
-    public AuthData getAuthToken(String authToken) {
+    public AuthData getAuthToken(String authToken) throws DAOException {
         return authTokens.stream()
-                .filter(auth -> auth.authToken().equals(authToken))
+                .filter(auth -> auth.getAuthToken().equals(authToken))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new DAOException("Auth token not found"));
     }
 
     @Override
-    public void removeAuthToken(String authToken) {
-        authTokens.removeIf(auth -> auth.authToken().equals(authToken));
+    public void removeAuthToken(String authToken) throws DAOException {
+        if (!authTokens.removeIf(auth -> auth.getAuthToken().equals(authToken))) {
+            throw new DAOException("Auth token not found");
+        }
     }
 
     @Override
