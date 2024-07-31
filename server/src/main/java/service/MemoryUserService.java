@@ -17,17 +17,17 @@ public class MemoryUserService implements IUserService {
     @Override
     public RegisterUserResponse registerUser(RegisterUserRequest request) throws ServiceException {
         validateRequest(request);
-        validateString(request.getUsername());
-        validateString(request.getPassword());
-        validateString(request.getEmail());
+        validateString(request.username());
+        validateString(request.password());
+        validateString(request.email());
 
-        String hashedPassword = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
-        UserData newUser = new UserData(request.getUsername(), hashedPassword, request.getEmail());
+        String hashedPassword = BCrypt.hashpw(request.password(), BCrypt.gensalt());
+        UserData newUser = new UserData(request.username(), hashedPassword, request.email());
 
         try {
             daoFactory.getUserDAO().addUser(newUser);
-            AuthData newAuth = daoFactory.getAuthDAO().createAuthToken(request.getUsername());
-            return new RegisterUserResponse(request.getUsername(), newAuth.getAuthToken());
+            AuthData newAuth = daoFactory.getAuthDAO().createAuthToken(request.username());
+            return new RegisterUserResponse(request.username(), newAuth.authToken());
         } catch (Exception e) {
             throw new ServiceException("Error registering user", e);
         }
@@ -36,17 +36,17 @@ public class MemoryUserService implements IUserService {
     @Override
     public LoginResponse loginUser(LoginRequest request) throws ServiceException {
         validateRequest(request);
-        validateString(request.getUsername());
-        validateString(request.getPassword());
+        validateString(request.username());
+        validateString(request.password());
 
         try {
-            UserData user = daoFactory.getUserDAO().getUser(request.getUsername());
-            if (user == null || !BCrypt.checkpw(request.getPassword(), user.getPassword())) {
+            UserData user = daoFactory.getUserDAO().getUser(request.username());
+            if (user == null || !BCrypt.checkpw(request.password(), user.password())) {
                 throw new ServiceException("Unauthorized");
             }
 
-            AuthData authData = daoFactory.getAuthDAO().createAuthToken(user.getUsername());
-            return new LoginResponse(user.getUsername(), authData.getAuthToken());
+            AuthData authData = daoFactory.getAuthDAO().createAuthToken(user.username());
+            return new LoginResponse(user.username(), authData.authToken());
         } catch (Exception e) {
             throw new ServiceException("Error logging in user", e);
         }
@@ -56,8 +56,8 @@ public class MemoryUserService implements IUserService {
     public LogoutResponse logoutUser(LogoutRequest request) throws ServiceException {
         validateRequest(request);
         try {
-            authenticateUser(request.getAuthToken());
-            daoFactory.getAuthDAO().removeAuthToken(request.getAuthToken());
+            authenticateUser(request.authToken());
+            daoFactory.getAuthDAO().removeAuthToken(request.authToken());
             return new LogoutResponse();
         } catch (Exception e) {
             throw new ServiceException("Error logging out user", e);
