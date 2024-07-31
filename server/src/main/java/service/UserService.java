@@ -2,49 +2,37 @@ package service;
 
 import dataaccess.AuthDataAccess;
 import dataaccess.UserDataAccess;
-import dataaccess.StorageException;
+import dataaccess.InMemoryAuthDataAccess;
+import dataaccess.InMemoryUserDataAccess;
+import dataaccess.DataAccessException;
 import model.AuthData;
 import model.UserData;
-import org.mindrot.jbcrypt.BCrypt;
-import requestresult.*;
 
 public class UserService {
 
-    private final UserDataAccess userDataAccess;
-    private final AuthDataAccess authDataAccess;
+    private final UserDataAccess userDataAccess = new InMemoryUserDataAccess();
+    private final AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
 
-    public UserService(UserDataAccess userDataAccess, AuthDataAccess authDataAccess) {
-        this.userDataAccess = userDataAccess;
-        this.authDataAccess = authDataAccess;
-    }
-
-    public RegisterUserResponse register(RegisterUserRequest request) throws StorageException {
-        String hashedPassword = BCrypt.hashpw(request.getPassword(), BCrypt.gensalt());
-        UserData user = new UserData(request.getUsername(), hashedPassword, request.getEmail());
-        userDataAccess.addUser(user);
-        AuthData auth = authDataAccess.createAuth(user.username());
-        return new RegisterUserResponse(user.username(), auth.authToken());
-    }
-
-    public LoginResponse login(LoginRequest request) throws StorageException {
-        UserData user = userDataAccess.getUser(request.getUsername());
-        if (user == null || !BCrypt.checkpw(request.getPassword(), user.password())) {
-            throw new StorageException("Unauthorized");
+    public AuthData registerUser(UserData userData) throws DataAccessException {
+        if (userData.username() == null || userData.password() == null || userData.email() == null) {
+            throw new DataAccessException("Error: Bad request");
         }
-        AuthData auth = authDataAccess.createAuth(user.username());
-        return new LoginResponse(user.username(), auth.authToken());
+        userDataAccess.addUser(userData);
+        return authDataAccess.createAuth(userData.username());
     }
 
-    public LogoutResponse logout(LogoutRequest request) throws StorageException {
-        AuthData auth = authDataAccess.retrieveAuthByAuthToken(request.getAuthToken());
-        if (auth == null) {
-            throw new StorageException("Unauthorized");
+    public AuthData loginUser(UserData userData) throws DataAccessException {
+        UserData existingUser = userDataAccess.getUser(userData.username());
+        if (existingUser == null || !existingUser.password().equals(userData.password())) {
+            throw new DataAccessException("Error: Unauthorized");
         }
-        authDataAccess.deleteAuth(auth.authToken());
-        return new LogoutResponse();
+        return authDataAccess.createAuth(userData.username());
     }
 
-    public int getNumUsers() throws StorageException {
-        return userDataAccess.getNumUsers();
+    public void logoutUser(String authToken) throws DataAccessException {
+        if (authDataAccess.retrieveAuth(authToken) == null) {
+            throw new DataAccessException("Error: Unauthorized");
+        }
+        authDataAccess.deleteAuth(authToken);
     }
 }

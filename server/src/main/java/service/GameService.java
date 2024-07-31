@@ -2,47 +2,38 @@ package service;
 
 import dataaccess.AuthDataAccess;
 import dataaccess.GameDataAccess;
-import dataaccess.StorageException;
-import model.AuthData;
+import dataaccess.InMemoryAuthDataAccess;
+import dataaccess.InMemoryGameDataAccess;
+import dataaccess.DataAccessException;
 import model.GameData;
-import requestresult.*;
 
-import java.util.Collection;
+import java.util.List;
 
 public class GameService {
 
-    private final GameDataAccess gameDataAccess;
-    private final AuthDataAccess authDataAccess;
+    private final AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
+    private final GameDataAccess gameDataAccess = new InMemoryGameDataAccess();
 
-    public GameService(AuthDataAccess authDataAccess, GameDataAccess gameDataAccess) {
-        this.authDataAccess = authDataAccess;
-        this.gameDataAccess = gameDataAccess;
+    public List<GameData> listGames(String authToken) throws DataAccessException {
+        validateAuth(authToken);
+        return List.copyOf(gameDataAccess.listAllGames());
     }
 
-    public CreateGameResponse create(CreateGameRequest request) throws StorageException {
-        AuthData auth = authDataAccess.retrieveAuthByAuthToken(request.getAuthToken());
-        if (auth == null) {
-            throw new StorageException("Unauthorized");
-        }
-        GameData game = gameDataAccess.createGame(request.getGameName());
-        return new CreateGameResponse(game.gameID());
+    public GameData createGame(String gameName, String authToken) throws DataAccessException {
+        validateAuth(authToken);
+        return gameDataAccess.createGame(gameName);
     }
 
-    public JoinGameResponse join(JoinGameRequest request) throws StorageException {
-        AuthData auth = authDataAccess.retrieveAuthByAuthToken(request.getAuthToken());
-        if (auth == null) {
-            throw new StorageException("Unauthorized");
-        }
-        gameDataAccess.joinGame(request.getPlayerColor(), request.getGameId(), auth.username());
-        return new JoinGameResponse();
+    public GameData joinGame(String playerColor, int gameID, String authToken) throws DataAccessException {
+        validateAuth(authToken);
+        String username = authDataAccess.retrieveAuth(authToken).username();
+        gameDataAccess.joinGame(playerColor, gameID, username);
+        return gameDataAccess.getGame(gameID);
     }
 
-    public ListGamesResponse list(ListGamesRequest request) throws StorageException {
-        AuthData auth = authDataAccess.retrieveAuthByAuthToken(request.getAuthToken());
-        if (auth == null) {
-            throw new StorageException("Unauthorized");
+    private void validateAuth(String authToken) throws DataAccessException {
+        if (authDataAccess.retrieveAuth(authToken) == null) {
+            throw new DataAccessException("Error: Unauthorized");
         }
-        Collection<GameData> games = gameDataAccess.listAllGames();
-        return new ListGamesResponse(games);
     }
 }

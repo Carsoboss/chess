@@ -3,23 +3,19 @@ package service;
 import dataaccess.AuthDataAccess;
 import dataaccess.GameDataAccess;
 import dataaccess.UserDataAccess;
-import dataaccess.StorageException;
+import dataaccess.InMemoryAuthDataAccess;
+import dataaccess.InMemoryGameDataAccess;
+import dataaccess.InMemoryUserDataAccess;
 
 public class ClearService {
 
-    private final UserDataAccess userDataAccess;
-    private final AuthDataAccess authDataAccess;
-    private final GameDataAccess gameDataAccess;
+    private final UserDataAccess userDataAccess = new InMemoryUserDataAccess();
+    private final GameDataAccess gameDataAccess = new InMemoryGameDataAccess();
+    private final AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
 
-    public ClearService(UserDataAccess userDataAccess, AuthDataAccess authDataAccess, GameDataAccess gameDataAccess) {
-        this.userDataAccess = userDataAccess;
-        this.authDataAccess = authDataAccess;
-        this.gameDataAccess = gameDataAccess;
-    }
-
-    public void clear() throws StorageException {
+    public void clearDatabase() {
         userDataAccess.deleteAllUsers();
-        authDataAccess.deleteAllAuths();
         gameDataAccess.deleteAllGames();
+        authDataAccess.deleteAllAuths();
     }
 }
