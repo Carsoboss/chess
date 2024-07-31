@@ -1,12 +1,11 @@
 package model;
 
 public record AuthData(String authToken, String username) {
-    // Corrected getters
-    public String authToken() {
+    public String getAuthToken() {
         return authToken;
     }
 
-    public String username() {
+    public String getUsername() {
         return username;
     }
 }

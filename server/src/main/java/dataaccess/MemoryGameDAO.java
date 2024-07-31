@@ -22,8 +22,8 @@ public class MemoryGameDAO implements IGameDAO {
     }
 
     @Override
-    public void deleteAllGames() {
-        games.clear();
+    public void deleteAllGames() throws DAOException {
+
     }
 
     @Override

@@ -1,10 +1,10 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.ServiceException;
+import service.ServiceException;
 import requestresult.*;
 import service.ClearService;
-import service.GameService;
+import service.IGameService;
 import service.UserService;
 import spark.Request;
 import spark.Response;
@@ -13,14 +13,44 @@ import spark.Spark;
 import java.util.Map;
 
 public class Server {
-    private final GameService gameService;
+    private final IGameService iGameService;
     private final UserService userService;
     private final ClearService clearService;
     private static final int SUCCESS_STATUS = 200;
 
     public Server() {
         this.userService = new UserService();
-        this.gameService = new GameService();
+        this.iGameService = new IGameService() {
+            @Override
+            public ListGamesResponse listGames(ListGamesRequest request) throws ServiceException {
+                return null;
+            }
+
+            @Override
+            public CreateGameResponse createGame(CreateGameRequest request) throws ServiceException {
+                return null;
+            }
+
+            @Override
+            public JoinGameResponse joinGame(JoinGameRequest request) throws ServiceException {
+                return null;
+            }
+
+            @Override
+            public CreateGameResponse create(CreateGameRequest newRequest) {
+                return null;
+            }
+
+            @Override
+            public JoinGameResponse join(JoinGameRequest newRequest) {
+                return null;
+            }
+
+            @Override
+            public ListGamesResponse list(ListGamesRequest listRequest) {
+                return null;
+            }
+        };
         this.clearService = new ClearService();
     }
 
@@ -39,11 +69,6 @@ public class Server {
 
         Spark.awaitInitialization();
         return Spark.port();
-    }
-
-    public void stop() {
-        Spark.stop();
-        Spark.awaitStop();
     }
 
     private void handleException(ServiceException exception, Request request, Response response) {
@@ -67,7 +92,7 @@ public class Server {
 
     private Object listGames(Request request, Response response) throws ServiceException {
         ListGamesRequest listRequest = new ListGamesRequest(request.headers("authorization"));
-        ListGamesResponse listResponse = gameService.list(listRequest);
+        ListGamesResponse listResponse = iGameService.list(listRequest);
         response.status(SUCCESS_STATUS);
         return new Gson().toJson(listResponse);
     }
@@ -96,7 +121,7 @@ public class Server {
         String authToken = request.headers("authorization");
         CreateGameRequest createRequest = new Gson().fromJson(request.body(), CreateGameRequest.class);
         CreateGameRequest newRequest = new CreateGameRequest(authToken, createRequest.getGameName());
-        CreateGameResponse createResponse = gameService.create(newRequest);
+        CreateGameResponse createResponse = iGameService.create(newRequest);
         response.status(SUCCESS_STATUS);
         return new Gson().toJson(createResponse);
     }
@@ -105,8 +130,9 @@ public class Server {
         JoinGameRequest joinRequest = new Gson().fromJson(request.body(), JoinGameRequest.class);
         String authToken = request.headers("authorization");
         JoinGameRequest newRequest = new JoinGameRequest(authToken, joinRequest.getPlayerColor(), joinRequest.getGameId());
-        JoinGameResponse joinResponse = gameService.join(newRequest);
+        JoinGameResponse joinResponse = iGameService.join(newRequest);
         response.status(SUCCESS_STATUS);
         return new Gson().toJson(joinResponse);
     }
 }
+

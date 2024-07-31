@@ -1,16 +1,15 @@
 package model;
 
 public record UserData(String username, String password, String email) {
-    // Corrected getters
-    public String username() {
+    public String getUsername() {
         return username;
     }
 
-    public String password() {
+    public String getPassword() {
         return password;
     }
 
-    public String email() {
+    public String getEmail() {
         return email;
     }
 }

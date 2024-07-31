@@ -1,7 +1,6 @@
 package service;
 
 import dataaccess.DAOFactory;
-import dataaccess.ServiceException;
 import model.AuthData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
@@ -16,18 +15,25 @@ public class MemoryUserService implements IUserService {
 
     @Override
     public RegisterUserResponse registerUser(RegisterUserRequest request) throws ServiceException {
-        validateRequest(request);
-        validateString(request.username());
-        validateString(request.password());
-        validateString(request.email());
+        if (request == null) {
+            throw new ServiceException("Invalid request");
+        }
 
-        String hashedPassword = BCrypt.hashpw(request.password(), BCrypt.gensalt());
-        UserData newUser = new UserData(request.username(), hashedPassword, request.email());
+        String username = request.getUsername();
+        String password = request.getPassword();
+        String email = request.getEmail();
+
+        if (username == null || password == null || email == null) {
+            throw new ServiceException("Invalid input");
+        }
+
+        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+        UserData newUser = new UserData(username, hashedPassword, email);
 
         try {
             daoFactory.getUserDAO().addUser(newUser);
-            AuthData newAuth = daoFactory.getAuthDAO().createAuthToken(request.username());
-            return new RegisterUserResponse(request.username(), newAuth.authToken());
+            AuthData newAuth = daoFactory.getAuthDAO().createAuthToken(username);
+            return new RegisterUserResponse(username, newAuth.getAuthToken());
         } catch (Exception e) {
             throw new ServiceException("Error registering user", e);
         }
@@ -35,18 +41,25 @@ public class MemoryUserService implements IUserService {
 
     @Override
     public LoginResponse loginUser(LoginRequest request) throws ServiceException {
-        validateRequest(request);
-        validateString(request.username());
-        validateString(request.password());
+        if (request == null) {
+            throw new ServiceException("Invalid request");
+        }
+
+        String username = request.getUsername();
+        String password = request.getPassword();
+
+        if (username == null || password == null) {
+            throw new ServiceException("Invalid input");
+        }
 
         try {
-            UserData user = daoFactory.getUserDAO().getUser(request.username());
-            if (user == null || !BCrypt.checkpw(request.password(), user.password())) {
+            UserData user = daoFactory.getUserDAO().getUser(username);
+            if (user == null || !BCrypt.checkpw(password, user.getPassword())) {
                 throw new ServiceException("Unauthorized");
             }
 
-            AuthData authData = daoFactory.getAuthDAO().createAuthToken(user.username());
-            return new LoginResponse(user.username(), authData.authToken());
+            AuthData authData = daoFactory.getAuthDAO().createAuthToken(user.getUsername());
+            return new LoginResponse(user.getUsername(), authData.getAuthToken());
         } catch (Exception e) {
             throw new ServiceException("Error logging in user", e);
         }
@@ -54,37 +67,24 @@ public class MemoryUserService implements IUserService {
 
     @Override
     public LogoutResponse logoutUser(LogoutRequest request) throws ServiceException {
-        validateRequest(request);
-        try {
-            authenticateUser(request.authToken());
-            daoFactory.getAuthDAO().removeAuthToken(request.authToken());
-            return new LogoutResponse();
-        } catch (Exception e) {
-            throw new ServiceException("Error logging out user", e);
-        }
-    }
-
-    private void validateRequest(Object request) throws ServiceException {
         if (request == null) {
             throw new ServiceException("Invalid request");
         }
-    }
 
-    private void validateString(String value) throws ServiceException {
-        if (value == null || value.isEmpty()) {
-            throw new ServiceException("Invalid value");
-        }
-    }
+        String authToken = request.getAuthToken();
 
-    private AuthData authenticateUser(String authToken) throws ServiceException {
         try {
             AuthData authData = daoFactory.getAuthDAO().getAuthToken(authToken);
             if (authData == null) {
                 throw new ServiceException("Unauthorized");
             }
-            return authData;
+
+            daoFactory.getAuthDAO().removeAuthToken(authToken);
+            return new LogoutResponse();
         } catch (Exception e) {
-            throw new ServiceException("Error authenticating user", e);
+            throw new ServiceException("Error logging out user", e);
         }
     }
 }
+
+

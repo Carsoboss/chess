@@ -1,7 +1,8 @@
 package service;
 
 import requestresult.*;
-import dataaccess.ServiceException;
+import service.ServiceException;
+
 
 public interface IUserService {
     RegisterUserResponse registerUser(RegisterUserRequest request) throws ServiceException;

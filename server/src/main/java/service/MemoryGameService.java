@@ -1,11 +1,14 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.DAOFactory;
-import dataaccess.ServiceException;
 import model.AuthData;
 import model.GameData;
 import requestresult.*;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class MemoryGameService implements IGameService {
     private final DAOFactory daoFactory;
@@ -16,12 +19,16 @@ public class MemoryGameService implements IGameService {
 
     @Override
     public ListGamesResponse listGames(ListGamesRequest request) throws ServiceException {
-        validateRequest(request);
-        authenticateUser(request.getAuthToken());
+        if (request == null) {
+            throw new ServiceException("Invalid request");
+        }
+
+        String authToken = request.getAuthToken();
 
         try {
+            AuthData authData = daoFactory.getAuthDAO().getAuthToken(authToken);
             Collection<GameData> games = daoFactory.getGameDAO().getAllGames();
-            return new ListGamesResponse(games);
+            return new ListGamesResponse(new ArrayList<>(games));
         } catch (Exception e) {
             throw new ServiceException("Error listing games", e);
         }
@@ -29,14 +36,17 @@ public class MemoryGameService implements IGameService {
 
     @Override
     public CreateGameResponse createGame(CreateGameRequest request) throws ServiceException {
-        validateRequest(request);
-        validateString(request.getGameName());
+        if (request == null) {
+            throw new ServiceException("Invalid request");
+        }
 
-        authenticateUser(request.getAuthToken());
+        String authToken = request.getAuthToken();
+        String gameName = request.getGameName();
 
         try {
-            GameData game = daoFactory.getGameDAO().createGame(request.getGameName());
-            return new CreateGameResponse(game.getGameID());
+            AuthData authData = daoFactory.getAuthDAO().getAuthToken(authToken);
+            GameData game = daoFactory.getGameDAO().createGame(gameName);
+            return new CreateGameResponse(game.getGameId());
         } catch (Exception e) {
             throw new ServiceException("Error creating game", e);
         }
@@ -44,48 +54,37 @@ public class MemoryGameService implements IGameService {
 
     @Override
     public JoinGameResponse joinGame(JoinGameRequest request) throws ServiceException {
-        validateRequest(request);
-        validateObject(request.getPlayerColor());
-        validateObject(request.getGameId());
+        if (request == null) {
+            throw new ServiceException("Invalid request");
+        }
 
-        AuthData authData = authenticateUser(request.getAuthToken());
+        String authToken = request.getAuthToken();
+        ChessGame.TeamColor playerColor = request.getPlayerColor();
+        int gameId = request.getGameId();
 
         try {
-            daoFactory.getGameDAO().addPlayerToGame(request.getPlayerColor(), request.getGameId(), authData.getUsername());
+            AuthData authData = daoFactory.getAuthDAO().getAuthToken(authToken);
+            daoFactory.getGameDAO().addPlayerToGame(playerColor, gameId, authData.getUsername());
             return new JoinGameResponse();
         } catch (Exception e) {
             throw new ServiceException("Error joining game", e);
         }
     }
 
-    private void validateRequest(Object request) throws ServiceException {
-        if (request == null) {
-            throw new ServiceException("Invalid request");
-        }
+    @Override
+    public CreateGameResponse create(CreateGameRequest newRequest) {
+        return null;
     }
 
-    private void validateString(String value) throws ServiceException {
-        if (value == null || value.isEmpty()) {
-            throw new ServiceException("Invalid value");
-        }
+    @Override
+    public JoinGameResponse join(JoinGameRequest newRequest) {
+        return null;
     }
 
-    private void validateObject(Object value) throws ServiceException {
-        if (value == null) {
-            throw new ServiceException("Invalid value");
-        }
-    }
-
-    private AuthData authenticateUser(String authToken) throws ServiceException {
-        try {
-            AuthData authData = daoFactory.getAuthDAO().getAuthToken(authToken);
-            if (authData == null) {
-                throw new ServiceException("Unauthorized");
-            }
-            return authData;
-        } catch (Exception e) {
-            throw new ServiceException("Error authenticating user", e);
-        }
+    @Override
+    public ListGamesResponse list(ListGamesRequest listRequest) {
+        return null;
     }
 }
+
 

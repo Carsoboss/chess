@@ -1,6 +1,7 @@
 package service;
 
-import dataaccess.ServiceException;
+import service.ServiceException;
+
 import requestresult.*;
 
 public class UserService {

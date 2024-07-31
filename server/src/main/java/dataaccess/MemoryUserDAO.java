@@ -11,22 +11,31 @@ public class MemoryUserDAO implements IUserDAO {
 
     @Override
     public void addUser(UserData user) throws DAOException {
-        if (users.values().stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
-            throw new DAOException("Username already taken");
+        for (UserData currUser : users.values()) {
+            if (currUser.username().equals(user.username())) {
+                throw new DAOException("Username already taken");
+            }
         }
         users.put(nextId++, user);
     }
 
     @Override
-    public UserData getUser(String username) {
-        return users.values().stream()
-                .filter(user -> user.getUsername().equals(username))
-                .findFirst()
-                .orElse(null);
+    public void deleteAllUsers() throws DAOException {
+
     }
 
     @Override
-    public void deleteAllUsers() {
+    public UserData getUser(String username) throws DAOException {
+        for (UserData user : users.values()) {
+            if (user.username().equals(username)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void removeAllUsers() {
         users.clear();
     }
 

@@ -1,7 +1,8 @@
 package service;
 
 import requestresult.ClearResponse;
-import dataaccess.ServiceException;
+import service.ServiceException;
+
 import dataaccess.DAOFactory;
 
 public class MemoryClearService implements IClearService {

@@ -1,7 +1,8 @@
 package service;
 
 import requestresult.ClearResponse;
-import dataaccess.ServiceException;
+import service.ServiceException;
+
 
 public interface IClearService {
     ClearResponse clearAll() throws ServiceException;

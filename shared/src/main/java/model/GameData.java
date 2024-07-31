@@ -3,20 +3,19 @@ package model;
 import chess.ChessGame;
 
 public record GameData(int gameID, String whiteUsername, String blackUsername, String gameName, ChessGame game) {
-    // Corrected getters
-    public int gameID() {
+    public int getGameId() {
         return gameID;
     }
 
-    public String whiteUsername() {
+    public String getWhiteUsername() {
         return whiteUsername;
     }
 
-    public String blackUsername() {
+    public String getBlackUsername() {
         return blackUsername;
     }
 
-    public String gameName() {
+    public String getGameName() {
         return gameName;
     }
 }

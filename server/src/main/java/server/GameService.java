@@ -1,7 +1,10 @@
-package service;
+package server;
 
-import dataaccess.ServiceException;
+import service.IGameService;
+import service.ServiceException;
+
 import requestresult.*;
+import service.ServiceFactory;
 
 public class GameService {
     private final IGameService gameService;
