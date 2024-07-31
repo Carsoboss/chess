@@ -10,12 +10,19 @@ import model.UserData;
 
 public class UserService {
 
-    private final UserDataAccess userDataAccess = new InMemoryUserDataAccess();
-    private final AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
+    private final UserDataAccess userDataAccess;
+    private final AuthDataAccess authDataAccess;
 
+    public UserService(UserDataAccess userDataAccess, AuthDataAccess authDataAccess) {
+        this.userDataAccess = userDataAccess;
+        this.authDataAccess = authDataAccess;
+    }
     public AuthData registerUser(UserData userData) throws DataAccessException {
         if (userData.username() == null || userData.password() == null || userData.email() == null) {
             throw new DataAccessException("Error: Bad request");
+        }
+        if (userDataAccess.getUser(userData.username()) != null) {
+            throw new DataAccessException("Error: already taken");
         }
         userDataAccess.addUser(userData);
         return authDataAccess.createAuth(userData.username());

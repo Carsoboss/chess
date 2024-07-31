@@ -2,8 +2,6 @@ package service;
 
 import dataaccess.AuthDataAccess;
 import dataaccess.GameDataAccess;
-import dataaccess.InMemoryAuthDataAccess;
-import dataaccess.InMemoryGameDataAccess;
 import dataaccess.DataAccessException;
 import model.GameData;
 
@@ -11,8 +9,13 @@ import java.util.List;
 
 public class GameService {
 
-    private final AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
-    private final GameDataAccess gameDataAccess = new InMemoryGameDataAccess();
+    private final AuthDataAccess authDataAccess;
+    private final GameDataAccess gameDataAccess;
+
+    public GameService(AuthDataAccess authDataAccess, GameDataAccess gameDataAccess) {
+        this.authDataAccess = authDataAccess;
+        this.gameDataAccess = gameDataAccess;
+    }
 
     public List<GameData> listGames(String authToken) throws DataAccessException {
         validateAuth(authToken);
@@ -37,3 +40,4 @@ public class GameService {
         }
     }
 }
+

@@ -10,8 +10,13 @@ import spark.Response;
 
 public class LoginController {
 
+    private final UserService userService;
+
+    public LoginController(UserService userService) {
+        this.userService = userService;
+    }
+
     public Object handleLogin(Request req, Response res) {
-        UserService userService = new UserService();
         UserData loginRequest = new Gson().fromJson(req.body(), UserData.class);
 
         try {
@@ -19,7 +24,7 @@ public class LoginController {
             res.status(200);
             return new Gson().toJson(authResponse);
         } catch (DataAccessException e) {
-            res.status(400);
+            res.status(401); // Unauthorized
             return "{ \"message\": \"" + e.getMessage() + "\" }";
         }
     }

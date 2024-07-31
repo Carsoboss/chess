@@ -10,8 +10,13 @@ import spark.Response;
 
 public class RegisterController {
 
+    private final UserService userService;
+
+    public RegisterController(UserService userService) {
+        this.userService = userService;
+    }
+
     public Object handleRegister(Request req, Response res) {
-        UserService userService = new UserService();
         UserData registrationRequest = new Gson().fromJson(req.body(), UserData.class);
 
         try {
@@ -19,8 +24,14 @@ public class RegisterController {
             res.status(200);
             return new Gson().toJson(authResponse);
         } catch (DataAccessException e) {
-            res.status(400);
+            if (e.getMessage().contains("already taken")) {
+                res.status(403); // Forbidden
+            } else {
+                res.status(400); // Bad request
+            }
             return "{ \"message\": \"" + e.getMessage() + "\" }";
         }
     }
 }
+
+

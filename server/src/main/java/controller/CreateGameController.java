@@ -9,8 +9,13 @@ import spark.Response;
 
 public class CreateGameController {
 
+    private final GameService gameService;
+
+    public CreateGameController(GameService gameService) {
+        this.gameService = gameService;
+    }
+
     public Object handleCreateGame(Request req, Response res) {
-        GameService gameService = new GameService();
         String authToken = req.headers("Authorization");
         String gameName = new Gson().fromJson(req.body(), CreateGameRequest.class).getGameName();
 
@@ -19,8 +24,9 @@ public class CreateGameController {
             res.status(200);
             return new Gson().toJson(gameResponse);
         } catch (DataAccessException e) {
-            res.status(400);
+            res.status(400); // Bad request
             return "{ \"message\": \"" + e.getMessage() + "\" }";
         }
     }
 }
+

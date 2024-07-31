@@ -7,11 +7,15 @@ import service.GameService;
 import spark.Request;
 import spark.Response;
 
-
 public class JoinGameController {
 
+    private final GameService gameService;
+
+    public JoinGameController(GameService gameService) {
+        this.gameService = gameService;
+    }
+
     public Object handleJoinGame(Request req, Response res) {
-        GameService gameService = new GameService();
         String authToken = req.headers("Authorization");
         JoinGameRequest joinGameRequest = new Gson().fromJson(req.body(), JoinGameRequest.class);
 
@@ -20,8 +24,9 @@ public class JoinGameController {
             res.status(200);
             return new Gson().toJson(gameResponse);
         } catch (DataAccessException e) {
-            res.status(400);
+            res.status(400); // Bad request
             return "{ \"message\": \"" + e.getMessage() + "\" }";
         }
     }
 }
+
