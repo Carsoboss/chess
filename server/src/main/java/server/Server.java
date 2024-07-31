@@ -135,4 +135,3 @@ public class Server {
         return new Gson().toJson(joinResponse);
     }
 }
-
