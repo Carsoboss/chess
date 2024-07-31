@@ -1,22 +1,18 @@
-import chess.ChessPiece;
-import chess.ChessGame;
 import server.Server;
-
 
 public class Main {
     public static void main(String[] args) {
-        ChessPiece piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-        System.out.println("♕ 240 Chess Server: " + piece);
+        try {
+            int port = 8080;
+            if (args.length >= 1) {
+                port = Integer.parseInt(args[0]);
+            }
 
-        UserDataAccess userDataAccess = new MySQLUserStorage();
-        AuthDataAccess authDataAccess = new MySQLAuthStorage();
-        GameDataAccess gameDataAccess = new MySQLGameStorage();
-
-        UserService userService = new UserService(userDataAccess, authDataAccess);
-        GameService gameService = new GameService(authDataAccess, gameDataAccess);
-        ClearService clearService = new ClearService(userDataAccess, authDataAccess, gameDataAccess);
-
-        Server serverInstance = new Server(userService, gameService, clearService);
-        serverInstance.run(8080);
+            Server server = new Server();
+            server.run(port);
+            System.out.printf("Server started on port %d%n", port);
+        } catch (Throwable ex) {
+            System.err.printf("Unable to start server: %s%n", ex.getMessage());
+        }
     }
 }

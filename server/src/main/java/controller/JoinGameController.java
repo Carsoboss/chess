@@ -7,6 +7,7 @@ import service.GameService;
 import spark.Request;
 import spark.Response;
 
+
 public class JoinGameController {
 
     public Object handleJoinGame(Request req, Response res) {

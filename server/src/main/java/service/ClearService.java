@@ -1,11 +1,6 @@
 package service;
 
-import dataaccess.AuthDataAccess;
-import dataaccess.GameDataAccess;
-import dataaccess.UserDataAccess;
-import dataaccess.InMemoryAuthDataAccess;
-import dataaccess.InMemoryGameDataAccess;
-import dataaccess.InMemoryUserDataAccess;
+import dataaccess.*;
 
 public class ClearService {
 
@@ -13,7 +8,7 @@ public class ClearService {
     private final GameDataAccess gameDataAccess = new InMemoryGameDataAccess();
     private final AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
 
-    public void clearDatabase() {
+    public void clearDatabase() throws DataAccessException {
         userDataAccess.deleteAllUsers();
         gameDataAccess.deleteAllGames();
         authDataAccess.deleteAllAuths();
