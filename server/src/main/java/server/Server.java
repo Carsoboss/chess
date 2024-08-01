@@ -24,7 +24,7 @@ public class Server {
             Spark.port(desiredPort);
 
             // Serve static files from the /web directory in src/main/resources
-            Spark.staticFiles.location("/web");
+            Spark.staticFiles.location("web");
 
             // Register routes and handlers
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
@@ -34,6 +34,13 @@ public class Server {
             Spark.post("/game", (req, res) -> new CreateGameController(gameService).handleCreateGame(req, res));
             Spark.put("/game", (req, res) -> new JoinGameController(gameService).handleJoinGame(req, res));
             Spark.delete("/db", (req, res) -> new ClearDatabaseController(clearService).handleClearDatabase(req, res));
+
+            // Handle unsupported routes
+            Spark.notFound((req, res) -> {
+                res.type("application/json");
+                res.status(404);
+                return "{\"message\":\"Route not found\"}";
+            });
 
             Spark.awaitInitialization();
             return Spark.port();

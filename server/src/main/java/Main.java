@@ -1,5 +1,4 @@
 import server.Server;
-import service.UserService;
 import service.GameService;
 import service.ClearService;
 import dataaccess.InMemoryUserDataAccess;
@@ -8,6 +7,7 @@ import dataaccess.InMemoryGameDataAccess;
 import dataaccess.UserDataAccess;
 import dataaccess.AuthDataAccess;
 import dataaccess.GameDataAccess;
+import service.UserService;
 
 public class Main {
     public static void main(String[] args) {
