@@ -1,10 +1,8 @@
 package service;
 
 import dataaccess.AuthDataAccess;
-import dataaccess.UserDataAccess;
-import dataaccess.InMemoryAuthDataAccess;
-import dataaccess.InMemoryUserDataAccess;
 import dataaccess.DataAccessException;
+import dataaccess.UserDataAccess;
 import model.AuthData;
 import model.UserData;
 
@@ -17,12 +15,13 @@ public class UserService {
         this.userDataAccess = userDataAccess;
         this.authDataAccess = authDataAccess;
     }
+
     public AuthData registerUser(UserData userData) throws DataAccessException {
         if (userData.username() == null || userData.password() == null || userData.email() == null) {
-            throw new DataAccessException("Error: Bad request");
+            throw new DataAccessException("Error: bad request");
         }
         if (userDataAccess.getUser(userData.username()) != null) {
-            throw new DataAccessException("Error: already taken");
+            throw new DataAccessException("Error: Username already taken");
         }
         userDataAccess.addUser(userData);
         return authDataAccess.createAuth(userData.username());
@@ -33,7 +32,7 @@ public class UserService {
         if (existingUser == null || !existingUser.password().equals(userData.password())) {
             throw new DataAccessException("Error: Unauthorized");
         }
-        return authDataAccess.createAuth(userData.username());
+        return authDataAccess.createAuth(existingUser.username());
     }
 
     public void logoutUser(String authToken) throws DataAccessException {
@@ -43,3 +42,4 @@ public class UserService {
         authDataAccess.deleteAuth(authToken);
     }
 }
+

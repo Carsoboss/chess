@@ -13,7 +13,6 @@ public class Server {
     private final GameService gameService;
     private final ClearService clearService;
 
-    // Constructor that accepts the services as arguments
     public Server(UserService userService, GameService gameService, ClearService clearService) {
         this.userService = userService;
         this.gameService = gameService;
@@ -24,8 +23,9 @@ public class Server {
         try {
             Spark.port(desiredPort);
 
-            // Serve static files from the /web directory in src/main/resources
-            Spark.staticFiles.location("/web");
+            // Ensure that Spark is looking in the right directory for static files
+            Spark.staticFiles.externalLocation("C:/Users/carso/Code/personal/school/chess/server/src/main/resources/web");
+
 
             // Register routes and handlers
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
@@ -36,15 +36,17 @@ public class Server {
             Spark.put("/game", (req, res) -> new JoinGameController(gameService).handleJoinGame(req, res));
             Spark.delete("/db", (req, res) -> new ClearDatabaseController(clearService).handleClearDatabase(req, res));
 
-            // Handle exceptions
+            // Global Exception Handler for DataAccessException
             Spark.exception(DataAccessException.class, (ex, req, res) -> {
-                int statusCode = switch (ex.getMessage()) {
-                    case "bad request" -> 400;
-                    case "unauthorized" -> 401;
-                    case "already taken" -> 403;
-                    default -> 500;
-                };
-                res.status(statusCode);
+                if (ex.getMessage().contains("Unauthorized")) {
+                    res.status(401);
+                } else if (ex.getMessage().contains("Username already taken")) {
+                    res.status(403);
+                } else if (ex.getMessage().contains("bad request")) {
+                    res.status(400);
+                } else {
+                    res.status(500);
+                }
                 res.body("{\"message\":\"" + ex.getMessage() + "\"}");
             });
 
