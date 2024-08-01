@@ -35,9 +35,9 @@ public class Server {
     public int run(int desiredPort) {
         try {
             Spark.port(desiredPort);
-
             // Ensure that Spark is looking in the right directory for static files
-            Spark.staticFiles.externalLocation("C:/Users/carso/Code/personal/school/chess/server/src/main/resources/web");
+            Spark.staticFiles.location("web");
+//            Spark.get("/", (req, res) -> "hello chess server");
             // Register routes and handlers
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
             Spark.post("/session", (req, res) -> new LoginController(userService).handleLogin(req, res));
@@ -47,7 +47,7 @@ public class Server {
             Spark.put("/game", (req, res) -> new JoinGameController(gameService).handleJoinGame(req, res));
             Spark.delete("/db", (req, res) -> new ClearDatabaseController(clearService).handleClearDatabase(req, res));
 
-            // Global Exception Handler for DataAccessException
+//             Global Exception Handler for DataAccessException
             Spark.exception(DataAccessException.class, (ex, req, res) -> {
                 if (ex.getMessage().contains("Unauthorized")) {
                     res.status(401);
