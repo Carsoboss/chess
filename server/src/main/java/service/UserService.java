@@ -17,12 +17,19 @@ public class UserService {
     }
 
     public AuthData registerUser(UserData userData) throws DataAccessException {
-        if (userData.username() == null || userData.password() == null || userData.email() == null) {
-            throw new DataAccessException("Error: bad request");
+        // Validate that all required fields are present
+        if (userData.username() == null || userData.username().isEmpty() ||
+                userData.password() == null || userData.password().isEmpty() ||
+                userData.email() == null || userData.email().isEmpty()) {
+            throw new DataAccessException("Error: bad request - missing fields");
         }
+
+        // Check if the user already exists
         if (userDataAccess.getUser(userData.username()) != null) {
             throw new DataAccessException("Error: Username already taken");
         }
+
+        // Add the new user and create an authentication token
         userDataAccess.addUser(userData);
         return authDataAccess.createAuth(userData.username());
     }
@@ -32,7 +39,7 @@ public class UserService {
         if (existingUser == null || !existingUser.password().equals(userData.password())) {
             throw new DataAccessException("Error: Unauthorized");
         }
-        return authDataAccess.createAuth(existingUser.username());
+        return authDataAccess.createAuth(userData.username());
     }
 
     public void logoutUser(String authToken) throws DataAccessException {
@@ -42,4 +49,3 @@ public class UserService {
         authDataAccess.deleteAuth(authToken);
     }
 }
-

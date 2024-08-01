@@ -22,11 +22,8 @@ public class Server {
     public int run(int desiredPort) {
         try {
             Spark.port(desiredPort);
-
             // Ensure that Spark is looking in the right directory for static files
             Spark.staticFiles.externalLocation("C:/Users/carso/Code/personal/school/chess/server/src/main/resources/web");
-
-
             // Register routes and handlers
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
             Spark.post("/session", (req, res) -> new LoginController(userService).handleLogin(req, res));

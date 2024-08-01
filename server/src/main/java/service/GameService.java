@@ -1,8 +1,8 @@
 package service;
 
 import dataaccess.AuthDataAccess;
-import dataaccess.DataAccessException;
 import dataaccess.GameDataAccess;
+import dataaccess.DataAccessException;
 import model.GameData;
 
 import java.util.List;
@@ -40,3 +40,4 @@ public class GameService {
         }
     }
 }
+

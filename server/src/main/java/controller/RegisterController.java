@@ -24,12 +24,14 @@ public class RegisterController {
             res.status(200);
             return new Gson().toJson(authResponse);
         } catch (DataAccessException e) {
-            if (e.getMessage().contains("already taken")) {
+            if (e.getMessage().contains("Username already taken")) {
                 res.status(403); // Forbidden
+            } else if (e.getMessage().contains("bad request")) {
+                res.status(400); // Bad Request
             } else {
-                res.status(400); // Bad request
+                res.status(500); // Internal Server Error
             }
-            return "{ \"message\": \"" + e.getMessage() + "\", \"username\": \"" + registrationRequest.username() + "\" }";
+            return "{ \"message\": \"" + e.getMessage() + "\" }";
         }
     }
 }
