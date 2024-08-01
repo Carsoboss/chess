@@ -16,8 +16,12 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ChessPiece that = (ChessPiece) o;
         return pieceColor == that.pieceColor && type == that.type;
     }
@@ -70,42 +74,66 @@ public class ChessPiece {
                 break;
             case QUEEN:
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x + i, y, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x + i, y, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x - i, y, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x - i, y, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x, y + i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x, y + i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x, y - i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x, y - i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x + i, y + i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x + i, y + i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x - i, y - i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x - i, y - i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x + i, y - i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x + i, y - i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x - i, y + i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x - i, y + i, myPosition, board)) {
+                        break;
+                    }
                 }
                 break;
             case BISHOP:
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x + i, y + i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x + i, y + i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x - i, y - i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x - i, y - i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x + i, y - i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x + i, y - i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = 1; i < 8; i++) {
-                    if (!addValidMove(validMoves, x - i, y + i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x - i, y + i, myPosition, board)) {
+                        break;
+                    }
                 }
                 break;
             case KNIGHT:
@@ -120,16 +148,24 @@ public class ChessPiece {
                 break;
             case ROOK:
                 for (int i = x + 1; i <= 8; i++) {
-                    if (!addValidMove(validMoves, i, y, myPosition, board)) break;
+                    if (!addValidMove(validMoves, i, y, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = x - 1; i >= 1; i--) {
-                    if (!addValidMove(validMoves, i, y, myPosition, board)) break;
+                    if (!addValidMove(validMoves, i, y, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = y + 1; i <= 8; i++) {
-                    if (!addValidMove(validMoves, x, i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x, i, myPosition, board)) {
+                        break;
+                    }
                 }
                 for (int i = y - 1; i >= 1; i--) {
-                    if (!addValidMove(validMoves, x, i, myPosition, board)) break;
+                    if (!addValidMove(validMoves, x, i, myPosition, board)) {
+                        break;
+                    }
                 }
                 break;
             case PAWN:
