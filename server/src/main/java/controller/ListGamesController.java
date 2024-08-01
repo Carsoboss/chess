@@ -8,6 +8,7 @@ import spark.Request;
 import spark.Response;
 
 import java.util.List;
+import java.util.Map;
 
 public class ListGamesController {
 
@@ -23,7 +24,7 @@ public class ListGamesController {
         try {
             List<GameData> games = gameService.listGames(authToken);
             res.status(200);
-            return new Gson().toJson(games);
+            return new Gson().toJson(Map.of("games", games));
         } catch (DataAccessException e) {
             res.status(401); // Unauthorized
             return "{ \"message\": \"" + e.getMessage() + "\" }";

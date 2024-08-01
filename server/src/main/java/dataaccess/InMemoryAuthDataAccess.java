@@ -11,7 +11,10 @@ public class InMemoryAuthDataAccess implements AuthDataAccess {
 
     @Override
     public AuthData createAuth(String username) {
-        String authToken = UUID.randomUUID().toString();
+        String authToken;
+        do {
+            authToken = UUID.randomUUID().toString();
+        } while (retrieveAuth(authToken) != null); // Ensure the token is unique
         AuthData authData = new AuthData(authToken, username);
         auths.add(authData);
         return authData;

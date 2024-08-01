@@ -1,6 +1,7 @@
 package server;
 
 import controller.*;
+import dataaccess.DataAccessException;
 import service.UserService;
 import service.GameService;
 import service.ClearService;
@@ -24,7 +25,7 @@ public class Server {
             Spark.port(desiredPort);
 
             // Serve static files from the /web directory in src/main/resources
-            Spark.staticFiles.location("web");
+            Spark.staticFiles.location("/web");
 
             // Register routes and handlers
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
@@ -35,11 +36,16 @@ public class Server {
             Spark.put("/game", (req, res) -> new JoinGameController(gameService).handleJoinGame(req, res));
             Spark.delete("/db", (req, res) -> new ClearDatabaseController(clearService).handleClearDatabase(req, res));
 
-            // Handle unsupported routes
-            Spark.notFound((req, res) -> {
-                res.type("application/json");
-                res.status(404);
-                return "{\"message\":\"Route not found\"}";
+            // Handle exceptions
+            Spark.exception(DataAccessException.class, (ex, req, res) -> {
+                int statusCode = switch (ex.getMessage()) {
+                    case "bad request" -> 400;
+                    case "unauthorized" -> 401;
+                    case "already taken" -> 403;
+                    default -> 500;
+                };
+                res.status(statusCode);
+                res.body("{\"message\":\"" + ex.getMessage() + "\"}");
             });
 
             Spark.awaitInitialization();

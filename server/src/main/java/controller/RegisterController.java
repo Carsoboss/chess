@@ -29,11 +29,8 @@ public class RegisterController {
             } else {
                 res.status(400); // Bad request
             }
-            return "{ \"message\": \"" + e.getMessage() + "\" }";
+            return "{ \"message\": \"" + e.getMessage() + "\", \"username\": \"" + registrationRequest.username() + "\" }";
         }
     }
 }
-
-
-
 
