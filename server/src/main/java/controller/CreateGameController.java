@@ -24,7 +24,11 @@ public class CreateGameController {
             res.status(200);
             return new Gson().toJson(gameResponse);
         } catch (DataAccessException e) {
-            res.status(400); // Bad request
+            if (e.getMessage().contains("Unauthorized")) {
+                res.status(401); // Unauthorized
+            } else {
+                res.status(400); // Bad request
+            }
             return "{ \"message\": \"" + e.getMessage() + "\" }";
         }
     }
