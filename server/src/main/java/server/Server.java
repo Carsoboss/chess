@@ -1,7 +1,7 @@
 package server;
 
 import controller.*;
-import dataaccess.DataAccessException;
+import dataaccess.*;
 import service.UserService;
 import service.GameService;
 import service.ClearService;
@@ -13,17 +13,32 @@ public class Server {
     private final GameService gameService;
     private final ClearService clearService;
 
+    // Existing constructor with arguments
     public Server(UserService userService, GameService gameService, ClearService clearService) {
         this.userService = userService;
         this.gameService = gameService;
         this.clearService = clearService;
     }
 
+    // New no-argument constructor for testing purposes
+    public Server() {
+        // Initialize default in-memory implementations
+        UserDataAccess userDataAccess = new InMemoryUserDataAccess();
+        AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
+        GameDataAccess gameDataAccess = new InMemoryGameDataAccess();
+
+        this.userService = new UserService(userDataAccess, authDataAccess);
+        this.gameService = new GameService(authDataAccess, gameDataAccess);
+        this.clearService = new ClearService(userDataAccess, authDataAccess, gameDataAccess);
+    }
+
     public int run(int desiredPort) {
         try {
             Spark.port(desiredPort);
+
             // Ensure that Spark is looking in the right directory for static files
             Spark.staticFiles.externalLocation("web");
+
             // Register routes and handlers
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
             Spark.post("/session", (req, res) -> new LoginController(userService).handleLogin(req, res));
