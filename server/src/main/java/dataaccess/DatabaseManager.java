@@ -33,7 +33,7 @@ public class DatabaseManager {
         }
     }
 
-    static void createDatabase() throws DataAccessException {
+    public static void createDatabase() throws DataAccessException {
         try (var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD)) {
             var statement = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
             try (var preparedStatement = conn.prepareStatement(statement)) {
@@ -54,7 +54,7 @@ public class DatabaseManager {
         }
     }
 
-    static void createTablesIfNotExists() throws DataAccessException {
+    public static void createTablesIfNotExists() throws DataAccessException {
         try (var conn = getConnection(); Statement stmt = conn.createStatement()) {
             // Create Users table
             stmt.executeUpdate("""
