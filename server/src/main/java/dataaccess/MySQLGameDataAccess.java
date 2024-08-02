@@ -1,7 +1,6 @@
 package dataaccess;
 
 import model.GameData;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,27 +9,24 @@ public class MySQLGameDataAccess implements GameDataAccess {
 
     @Override
     public GameData createGame(String gameName) throws DataAccessException {
+        if (isGameNameTaken(gameName)) {
+            throw new DataAccessException("Error: Game name already taken");
+        }
         String sql = "INSERT INTO Games (game_name) VALUES (?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, gameName);
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new DataAccessException("Creating game failed, no rows affected.");
-            }
-
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    int gameId = generatedKeys.getInt(1);
+            stmt.executeUpdate();
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    int gameId = rs.getInt(1);
                     return new GameData(gameId, null, null, gameName, null);
-                } else {
-                    throw new DataAccessException("Creating game failed, no ID obtained.");
                 }
             }
         } catch (SQLException e) {
             throw new DataAccessException("Error creating game: " + e.getMessage());
         }
+        return null;
     }
 
     @Override
@@ -40,53 +36,61 @@ public class MySQLGameDataAccess implements GameDataAccess {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.executeUpdate();
         } catch (SQLException e) {
-            throw new DataAccessException("Error deleting all games: " + e.getMessage());
+            throw new DataAccessException("Error deleting games: " + e.getMessage());
         }
     }
 
     @Override
     public Collection<GameData> listAllGames() throws DataAccessException {
-        Collection<GameData> games = new ArrayList<>();
         String sql = "SELECT * FROM Games";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
+            Collection<GameData> games = new ArrayList<>();
             while (rs.next()) {
-                GameData game = new GameData(
-                        rs.getInt("id"),
-                        rs.getString("white_player"),
-                        rs.getString("black_player"),
-                        rs.getString("game_name"),
-                        rs.getString("game_state")
-                );
-                games.add(game);
+                int gameId = rs.getInt("id");
+                String gameName = rs.getString("game_name");
+                String whitePlayer = rs.getString("white_player");
+                String blackPlayer = rs.getString("black_player");
+                String gameState = rs.getString("game_state");
+                games.add(new GameData(gameId, whitePlayer, blackPlayer, gameName, gameState));
             }
+            return games;
         } catch (SQLException e) {
-            throw new DataAccessException("Error listing all games: " + e.getMessage());
+            throw new DataAccessException("Error listing games: " + e.getMessage());
         }
-        return games;
     }
 
     @Override
     public void joinGame(String playerColor, int gameID, String username) throws DataAccessException {
-        String sql;
-        if ("WHITE".equalsIgnoreCase(playerColor)) {
-            sql = "UPDATE Games SET white_player = ? WHERE id = ?";
-        } else if ("BLACK".equalsIgnoreCase(playerColor)) {
-            sql = "UPDATE Games SET black_player = ? WHERE id = ?";
-        } else {
-            throw new DataAccessException("Invalid player color: " + playerColor);
+        if (playerColor == null || (!playerColor.equals("WHITE") && !playerColor.equals("BLACK"))) {
+            throw new DataAccessException("Error: Invalid player color");
         }
 
+        GameData game = getGame(gameID);
+        if (game == null) {
+            throw new DataAccessException("Error: Game not found");
+        }
+
+        if ("WHITE".equals(playerColor)) {
+            if (game.whiteUsername() != null) {
+                throw new DataAccessException("Error: White player already assigned");
+            }
+            game = new GameData(gameID, username, game.blackUsername(), game.gameName(), game.game());
+        } else if ("BLACK".equals(playerColor)) {
+            if (game.blackUsername() != null) {
+                throw new DataAccessException("Error: Black player already assigned");
+            }
+            game = new GameData(gameID, game.whiteUsername(), username, game.gameName(), game.game());
+        }
+
+        String sql = "UPDATE Games SET white_player = ?, black_player = ? WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            stmt.setInt(2, gameID);
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new DataAccessException("Joining game failed, no rows affected.");
-            }
+            stmt.setString(1, game.whiteUsername());
+            stmt.setString(2, game.blackUsername());
+            stmt.setInt(3, gameID);
+            stmt.executeUpdate();
         } catch (SQLException e) {
             throw new DataAccessException("Error joining game: " + e.getMessage());
         }
@@ -100,20 +104,17 @@ public class MySQLGameDataAccess implements GameDataAccess {
             stmt.setInt(1, gameID);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new GameData(
-                            rs.getInt("id"),
-                            rs.getString("white_player"),
-                            rs.getString("black_player"),
-                            rs.getString("game_name"),
-                            rs.getString("game_state")
-                    );
-                } else {
-                    throw new DataAccessException("Game with ID " + gameID + " not found.");
+                    String gameName = rs.getString("game_name");
+                    String whitePlayer = rs.getString("white_player");
+                    String blackPlayer = rs.getString("black_player");
+                    String gameState = rs.getString("game_state");
+                    return new GameData(gameID, whitePlayer, blackPlayer, gameName, gameState);
                 }
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Error retrieving game: " + e.getMessage());
+            throw new DataAccessException("Error getting game: " + e.getMessage());
         }
+        return null;
     }
 
     @Override
@@ -125,12 +126,11 @@ public class MySQLGameDataAccess implements GameDataAccess {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;
-                } else {
-                    throw new DataAccessException("Error checking if game name is taken.");
                 }
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Error checking if game name is taken: " + e.getMessage());
+            throw new DataAccessException("Error checking game name: " + e.getMessage());
         }
+        return false;
     }
 }
