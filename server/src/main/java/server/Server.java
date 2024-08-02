@@ -22,11 +22,9 @@ public class Server {
 
     // New no-argument constructor for testing purposes
     public Server() {
-        // Initialize default in-memory implementations
-        UserDataAccess userDataAccess = new InMemoryUserDataAccess();
-        AuthDataAccess authDataAccess = new InMemoryAuthDataAccess();
-        GameDataAccess gameDataAccess = new InMemoryGameDataAccess();
-
+        UserDataAccess userDataAccess = new MySQLUserDataAccess();
+        AuthDataAccess authDataAccess = new MySQLAuthDataAccess();
+        GameDataAccess gameDataAccess = new MySQLGameDataAccess();
         this.userService = new UserService(userDataAccess, authDataAccess);
         this.gameService = new GameService(authDataAccess, gameDataAccess);
         this.clearService = new ClearService(userDataAccess, authDataAccess, gameDataAccess);

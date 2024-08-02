@@ -6,6 +6,8 @@ import dataaccess.UserDataAccess;
 import model.AuthData;
 import model.UserData;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 public class UserService {
 
     private final UserDataAccess userDataAccess;
@@ -29,14 +31,20 @@ public class UserService {
             throw new DataAccessException("Error: Username already taken");
         }
 
+        // Hash the password before storing it
+        String hashedPassword = BCrypt.hashpw(userData.password(), BCrypt.gensalt());
+
+        // Create a new UserData object with the hashed password
+        UserData hashedUserData = new UserData(userData.username(), hashedPassword, userData.email());
+
         // Add the new user and create an authentication token
-        userDataAccess.addUser(userData);
+        userDataAccess.addUser(hashedUserData);
         return authDataAccess.createAuth(userData.username());
     }
 
     public AuthData loginUser(UserData userData) throws DataAccessException {
         UserData existingUser = userDataAccess.getUser(userData.username());
-        if (existingUser == null || !existingUser.password().equals(userData.password())) {
+        if (existingUser == null || !BCrypt.checkpw(userData.password(), existingUser.password())) {
             throw new DataAccessException("Error: Unauthorized");
         }
         return authDataAccess.createAuth(userData.username());
