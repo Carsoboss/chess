@@ -106,7 +106,8 @@ public class ChessPiece {
         addValidMove(moves, x - 1, y - 2, startPosition, board);
     }
 
-    private void addLinearMoves(Collection<ChessMove> moves, int x, int y, ChessPosition startPosition, ChessBoard board, boolean diagonal, boolean straight) {
+    private void addLinearMoves(Collection<ChessMove> moves, int x, int y, ChessPosition startPosition,
+                                ChessBoard board, boolean diagonal, boolean straight) {
         if (straight) {
             addDirectionalMoves(moves, x, y, startPosition, board, 1, 0); // Down
             addDirectionalMoves(moves, x, y, startPosition, board, -1, 0); // Up
@@ -121,7 +122,8 @@ public class ChessPiece {
         }
     }
 
-    private void addDirectionalMoves(Collection<ChessMove> moves, int x, int y, ChessPosition startPosition, ChessBoard board, int xIncrement, int yIncrement) {
+    private void addDirectionalMoves(Collection<ChessMove> moves, int x, int y,
+                                     ChessPosition startPosition, ChessBoard board, int xIncrement, int yIncrement) {
         for (int i = 1; i < 8; i++) {
             if (!addValidMove(moves, x + i * xIncrement, y + i * yIncrement, startPosition, board)) {
                 break;
