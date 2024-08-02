@@ -1,6 +1,9 @@
 package dataaccess;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
 
 public class DatabaseManager {
@@ -9,9 +12,6 @@ public class DatabaseManager {
     private static final String PASSWORD;
     private static final String CONNECTION_URL;
 
-    /*
-     * Load the database information for the db.properties file.
-     */
     static {
         try {
             try (var propStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("db.properties")) {
@@ -33,13 +33,9 @@ public class DatabaseManager {
         }
     }
 
-    /**
-     * Creates the database if it does not already exist.
-     */
     static void createDatabase() throws DataAccessException {
-        try {
+        try (var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD)) {
             var statement = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
-            var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
             try (var preparedStatement = conn.prepareStatement(statement)) {
                 preparedStatement.executeUpdate();
             }
@@ -48,23 +44,50 @@ public class DatabaseManager {
         }
     }
 
-    /**
-     * Create a connection to the database and sets the catalog based upon the
-     * properties specified in db.properties. Connections to the database should
-     * be short-lived, and you must close the connection when you are done with it.
-     * The easiest way to do that is with a try-with-resource block.
-     * <br/>
-     * <code>
-     * try (var conn = DbInfo.getConnection(databaseName)) {
-     * // execute SQL statements.
-     * }
-     * </code>
-     */
     static Connection getConnection() throws DataAccessException {
         try {
-            var conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
+            var conn = DriverManager.getConnection(CONNECTION_URL + "/" + DATABASE_NAME, USER, PASSWORD);
             conn.setCatalog(DATABASE_NAME);
             return conn;
+        } catch (SQLException e) {
+            throw new DataAccessException(e.getMessage());
+        }
+    }
+
+    static void createTablesIfNotExists() throws DataAccessException {
+        try (var conn = getConnection(); Statement stmt = conn.createStatement()) {
+            // Create Users table
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS Users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL
+                );
+            """);
+
+            // Create Games table
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS Games (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    game_name VARCHAR(255) UNIQUE NOT NULL,
+                    white_player VARCHAR(255),
+                    black_player VARCHAR(255),
+                    game_state TEXT,
+                    FOREIGN KEY (white_player) REFERENCES Users(username) ON DELETE SET NULL,
+                    FOREIGN KEY (black_player) REFERENCES Users(username) ON DELETE SET NULL
+                );
+            """);
+
+            // Create AuthTokens table
+            stmt.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS AuthTokens (
+                    token VARCHAR(255) PRIMARY KEY,
+                    username VARCHAR(255) NOT NULL,
+                    expiration DATETIME,
+                    FOREIGN KEY (username) REFERENCES Users(username) ON DELETE CASCADE
+                );
+            """);
         } catch (SQLException e) {
             throw new DataAccessException(e.getMessage());
         }
