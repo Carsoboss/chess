@@ -20,59 +20,45 @@ public class UserService {
     }
 
     public AuthData registerUser(UserData userData) throws DataAccessException {
-        validateUserData(userData);
+        if (userData.username() == null || userData.username().isEmpty() ||
+                userData.password() == null || userData.password().isEmpty() ||
+                userData.email() == null || userData.email().isEmpty()) {
+            throw new DataAccessException("Error: bad request - missing fields");
+        }
 
-        // Check if the username is already taken
+        // Check if the user already exists
         if (userDataAccess.getUser(userData.username()) != null) {
             throw new DataAccessException("Error: Username already taken");
         }
 
-        // Hash the password and create a new user
+        // Hash the password using BCrypt
         String hashedPassword = BCrypt.hashpw(userData.password(), BCrypt.gensalt());
-        UserData newUser = new UserData(userData.username(), hashedPassword, userData.email());
+        UserData userWithHashedPassword = new UserData(userData.username(), hashedPassword, userData.email());
 
-        // Store the new user and create an authentication token
-        userDataAccess.addUser(newUser);
-        return generateAuthToken(newUser.username());
+        // Add the new user and create an authentication token
+        userDataAccess.addUser(userWithHashedPassword);
+        String authToken = UUID.randomUUID().toString();
+        return authDataAccess.createAuth(userWithHashedPassword.username(), authToken);
     }
 
     public AuthData loginUser(UserData userData) throws DataAccessException {
-        validateLoginData(userData);
-
-        // Retrieve the stored user data
-        UserData storedUser = userDataAccess.getUser(userData.username());
-        if (storedUser == null || !BCrypt.checkpw(userData.password(), storedUser.password())) {
-            throw new DataAccessException("Error: Invalid username or password");
+        if (userData.username() == null || userData.password() == null) {
+            throw new DataAccessException("Error: Fields are blank");
         }
 
-        // Generate a new authentication token
-        return generateAuthToken(userData.username());
+        UserData existingUser = userDataAccess.getUser(userData.username());
+        if (existingUser == null || !BCrypt.checkpw(userData.password(), existingUser.password())) {
+            throw new DataAccessException("Error: Unauthorized");
+        }
+
+        String authToken = UUID.randomUUID().toString();
+        return authDataAccess.createAuth(existingUser.username(), authToken);
     }
 
     public void logoutUser(String authToken) throws DataAccessException {
-        if (authDataAccess.retrieveAuth(authToken) == null) {
-            throw new DataAccessException("Error: Invalid authentication token");
+        if (authToken == null || authDataAccess.retrieveAuth(authToken) == null) {
+            throw new DataAccessException("Error: Unauthorized");
         }
         authDataAccess.deleteAuth(authToken);
-    }
-
-    private void validateUserData(UserData userData) throws DataAccessException {
-        if (userData.username() == null || userData.username().isEmpty() ||
-                userData.password() == null || userData.password().isEmpty() ||
-                userData.email() == null || userData.email().isEmpty()) {
-            throw new DataAccessException("Error: Missing required fields");
-        }
-    }
-
-    private void validateLoginData(UserData userData) throws DataAccessException {
-        if (userData.username() == null || userData.username().isEmpty() ||
-                userData.password() == null || userData.password().isEmpty()) {
-            throw new DataAccessException("Error: Username or password cannot be empty");
-        }
-    }
-
-    private AuthData generateAuthToken(String username) throws DataAccessException {
-        String authToken = UUID.randomUUID().toString();
-        return authDataAccess.createAuth(username, authToken);
     }
 }
