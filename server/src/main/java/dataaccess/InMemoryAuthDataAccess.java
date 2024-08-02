@@ -1,18 +1,14 @@
 package dataaccess;
 
 import model.AuthData;
-
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 public class InMemoryAuthDataAccess implements AuthDataAccess {
     private final Set<AuthData> auths = new HashSet<>();
 
     @Override
-    public AuthData createAuth(String username) {
-        // Generate a unique auth token
-        String authToken = UUID.randomUUID().toString();
+    public AuthData createAuth(String username, String authToken) {
         AuthData authData = new AuthData(username, authToken);
         auths.add(authData);
         return authData;
