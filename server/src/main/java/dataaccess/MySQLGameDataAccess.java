@@ -63,16 +63,25 @@ public class MySQLGameDataAccess implements GameDataAccess {
 
     @Override
     public void joinGame(String playerColor, int gameID, String username) throws DataAccessException {
+        if (playerColor == null || (!playerColor.equals("WHITE") && !playerColor.equals("BLACK"))) {
+            throw new DataAccessException("Error: Invalid player color");
+        }
+
         GameData game = getGame(gameID);
         if (game == null) {
             throw new DataAccessException("Error: Game not found");
         }
-        if ("WHITE".equals(playerColor) && game.whiteUsername() == null) {
+
+        if ("WHITE".equals(playerColor)) {
+            if (game.whiteUsername() != null) {
+                throw new DataAccessException("Error: White player already assigned");
+            }
             game = new GameData(gameID, username, game.blackUsername(), game.gameName(), game.game());
-        } else if ("BLACK".equals(playerColor) && game.blackUsername() == null) {
+        } else if ("BLACK".equals(playerColor)) {
+            if (game.blackUsername() != null) {
+                throw new DataAccessException("Error: Black player already assigned");
+            }
             game = new GameData(gameID, game.whiteUsername(), username, game.gameName(), game.game());
-        } else {
-            throw new DataAccessException("Error: Invalid player color or player already assigned");
         }
 
         String sql = "UPDATE Games SET white_player = ?, black_player = ? WHERE id = ?";

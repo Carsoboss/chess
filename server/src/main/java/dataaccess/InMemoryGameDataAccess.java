@@ -37,12 +37,18 @@ public class InMemoryGameDataAccess implements GameDataAccess {
         if (game == null) {
             throw new DataAccessException("Error: Game not found");
         }
-        if ("WHITE".equals(playerColor) && game.whiteUsername() == null) {
+        if ("WHITE".equals(playerColor)) {
+            if (game.whiteUsername() != null) {
+                throw new DataAccessException("Error: White player already assigned");
+            }
             game = new GameData(gameID, username, game.blackUsername(), game.gameName(), game.game());
-        } else if ("BLACK".equals(playerColor) && game.blackUsername() == null) {
+        } else if ("BLACK".equals(playerColor)) {
+            if (game.blackUsername() != null) {
+                throw new DataAccessException("Error: Black player already assigned");
+            }
             game = new GameData(gameID, game.whiteUsername(), username, game.gameName(), game.game());
         } else {
-            throw new DataAccessException("Error: Invalid player color or player already assigned");
+            throw new DataAccessException("Error: Invalid player color");
         }
         games.put(gameID, game);
     }
