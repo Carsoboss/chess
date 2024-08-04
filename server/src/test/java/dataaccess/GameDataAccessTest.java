@@ -33,4 +33,18 @@ class GameDataAccessTest {
     void deleteAllGames() {
         // Setup and perform the test for deleting all games.
     }
+    @Test
+    void getDatabase() {
+        // Setup and perform the test for retrieving a specific game.
+    }
+
+    @Test
+    void isMemoryTaken() {
+        // Setup and perform the test for checking if a game name is taken.
+    }
+
+    @Test
+    void deleteOneGame() {
+        // Setup and perform the test for deleting all games.
+    }
 }
