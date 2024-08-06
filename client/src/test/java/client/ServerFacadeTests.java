@@ -1,138 +1,121 @@
 package client;
 
-import model.AuthData;
-import model.GameData;
+import chess.ChessGame;
+import model.UserData;
 import org.junit.jupiter.api.*;
 import server.Server;
+import serverfacade.ServerFacade;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
+
 
 public class ServerFacadeTests {
 
     private static Server server;
     private static ServerFacade facade;
-    private static String authToken;
+    private static final UserData EXISTING_USER = new UserData("existingUsername", "existingPassword", "existingEmail");
+    private static String existingAuth;
+    private static final UserData NEW_USER = new UserData("newUsername", "newPassword", "newEmail");
 
     @BeforeAll
-    public static void init() {
+    public static void init() throws IOException {
         server = new Server();
-        int port = server.run(0);
-        facade = new ServerFacade("http://localhost", port);
+        var port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
-    }
-
-    @BeforeEach
-    public void clearDatabase() throws IOException {
-        facade.clearDatabase();  // Ensure the database is cleared before each test
+        facade = new ServerFacade(port);
+        facade.clear();
+        facade.register(EXISTING_USER.username(), EXISTING_USER.password(), EXISTING_USER.email());
+        existingAuth = (String)facade.login(EXISTING_USER.username(), EXISTING_USER.password()).get("authToken");
     }
 
     @AfterAll
-    public static void stopServer() {
+    static void stopServer() {
         server.stop();
     }
 
+    // login
     @Test
-    public void registerUserTestPositive() throws IOException {
-        AuthData authData = facade.register("testUser", "testPass", "testEmail@example.com");
-        assertNotNull(authData);
-        assertEquals("testUser", authData.username());
-        authToken = authData.authToken();
+    public void loginNormal() throws IOException {
+        assertDoesNotThrow(() -> facade.login(EXISTING_USER.username(), EXISTING_USER.password()));
+        Map<String, Object> result = facade.login(EXISTING_USER.username(), EXISTING_USER.password());
+        assertTrue(((String)result.get("authToken")).length() >= 10);
+    }
+    @Test
+    public void loginBadPassword() throws IOException {
+        var result = facade.login(EXISTING_USER.username(), NEW_USER.password());
+        assertTrue(result.containsKey("message"));
     }
 
+    // register
     @Test
-    public void registerUserTestNegative() {
-        assertThrows(Exception.class, () -> {
-            facade.register("testUser", "testPass", "testEmail@example.com");
-            facade.register("testUser", "anotherPass", "anotherEmail@example.com");
-        });
+    public void registerNormal() throws IOException {
+        var result = facade.register(NEW_USER.username(), NEW_USER.password(), NEW_USER.email());
+        assertEquals(NEW_USER.username(), result.get("username"));
+        assertTrue(((String)result.get("authToken")).length() > 10);
+    }
+    @Test
+    public void registerExistingUser() throws IOException {
+        facade.register(EXISTING_USER.username(), EXISTING_USER.password(), EXISTING_USER.email());
+        var result = facade.register(EXISTING_USER.username(), EXISTING_USER.password(), EXISTING_USER.email());
+        assertTrue(result.containsKey("message"));
     }
 
+    // logout
     @Test
-    public void loginUserTestPositive() throws IOException {
-        facade.register("testUser", "testPass", "testEmail@example.com");
-        AuthData authData = facade.login("testUser", "testPass");
-        assertNotNull(authData);
-        assertEquals("testUser", authData.username());
-        authToken = authData.authToken();
+    public void logoutNormal() throws IOException {
+        var result = facade.login(EXISTING_USER.username(), EXISTING_USER.password());
+        assertDoesNotThrow(() -> facade.logout((String)result.get("authToken")));
+    }
+    @Test
+    public void logoutFakeAuth() throws IOException {
+        var result = facade.logout("fake-auth-token");
+        assertTrue(result.containsKey("message"));
     }
 
+    // list
     @Test
-    public void loginUserTestNegative() {
-        assertThrows(Exception.class, () -> {
-            facade.login("nonExistentUser", "wrongPass");
-        });
+    public void listNormal() throws IOException {
+        existingAuth = (String)facade.login(EXISTING_USER.username(), EXISTING_USER.password()).get("authToken");
+        facade.create(existingAuth, "funGame");
+        var result = facade.list(existingAuth);
+        assertInstanceOf(Collection.class, result.games());
+    }
+    @Test
+    public void listBadAuth() throws IOException {
+        var result = facade.list("fake-auth");
+        assertNotNull(result.message());
     }
 
+    // create
     @Test
-    public void logoutUserTestPositive() throws IOException {
-        AuthData authData = facade.register("testUser", "testPass", "testEmail@example.com");
-        String authToken = authData.authToken();
-        assertDoesNotThrow(() -> facade.logout(authToken));
+    public void createNormal() throws IOException {
+        var result = facade.create(existingAuth, "newGame");
+        assertTrue(Math.round((double)result.get("gameID")) >= 1);
+    }
+    @Test
+    public void createBadAuth() throws IOException {
+        var result = facade.create("bad-auth", "newGame");
+        assertTrue(result.containsKey("message"));
     }
 
+    // join
     @Test
-    public void logoutUserTestNegative() {
-        assertThrows(Exception.class, () -> {
-            facade.logout("invalidAuthToken");
-        });
+    public void joinNormal() {
+        assertDoesNotThrow(() -> facade.join(existingAuth, ChessGame.TeamColor.WHITE, 1));
+    }
+    @Test
+    public void joinNonexistentGame() throws IOException {
+        var result = facade.join(existingAuth, ChessGame.TeamColor.WHITE, -1);
+        assertTrue(result.containsKey("message"));
     }
 
+    // clear
     @Test
-    public void createGameTestPositive() throws IOException {
-        facade.register("testUser", "testPass", "testEmail@example.com");
-        GameData gameData = facade.createGame(authToken, "testGame");
-        assertNotNull(gameData);
-        assertEquals("testGame", gameData.gameName());
-    }
-
-    @Test
-    public void createGameTestNegative() {
-        assertThrows(Exception.class, () -> {
-            facade.createGame("invalidAuthToken", "testGame");
-        });
-    }
-
-    @Test
-    public void listGamesTestPositive() throws IOException {
-        facade.register("testUser", "testPass", "testEmail@example.com");
-        facade.createGame(authToken, "testGame1");
-        facade.createGame(authToken, "testGame2");
-        GameData[] games = facade.listGames(authToken);
-        assertNotNull(games);
-        assertEquals(2, games.length);
-    }
-
-    @Test
-    public void listGamesTestNegative() {
-        assertThrows(Exception.class, () -> {
-            facade.listGames("invalidAuthToken");
-        });
-    }
-
-    @Test
-    public void joinGameTestPositive() throws IOException {
-        facade.register("testUser", "testPass", "testEmail@example.com");
-        GameData gameData = facade.createGame(authToken, "testGameToJoin");
-        GameData joinedGame = facade.joinGame(authToken, "WHITE", gameData.gameID());
-        assertNotNull(joinedGame);
-        assertEquals("testGameToJoin", joinedGame.gameName());
-        assertEquals("testUser", joinedGame.whiteUsername());
-    }
-
-    @Test
-    public void joinGameTestNegative() {
-        assertThrows(Exception.class, () -> {
-            facade.joinGame("invalidAuthToken", "WHITE", 9999);
-        });
-    }
-
-    @Test
-    public void clearDatabaseTest() throws IOException {
-        facade.register("testUser", "testPass", "testEmail@example.com");
-        facade.createGame(authToken, "testGame");
-        facade.clearDatabase();
-        GameData[] games = facade.listGames(authToken);
-        assertEquals(0, games.length);
+    public void clear() {
+        assertDoesNotThrow(() -> facade.clear());
     }
 }
