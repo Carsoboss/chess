@@ -48,8 +48,9 @@
                                 </manifest>
                             </archive>
                             <descriptors>
-                                <descriptor>../test-dependencies-assembly.xml</descriptor>
+                                <descriptor>C:/Users/carso/Code/personal/school/chess/test-dependencies-assembly.xml</descriptor>
                             </descriptors>
+
                         </configuration>
                     </execution>
                 </executions>
