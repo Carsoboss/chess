@@ -1,4 +1,4 @@
-package ServerFacade;
+package serverfacade;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -117,4 +117,3 @@ public class ServerFacade {
         return connection;
     }
 }
-

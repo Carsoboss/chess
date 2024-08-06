@@ -61,8 +61,7 @@
         <dependency>
             <groupId>edu.byu.cs240</groupId>
             <artifactId>server</artifactId>
-            <scope>test</scope>
-            <version>1.0.0</version>
+            <version>1.0.0</version>  <!-- Removed the scope -->
         </dependency>
         <dependency>
             <groupId>org.glassfish.tyrus.bundles</groupId>
