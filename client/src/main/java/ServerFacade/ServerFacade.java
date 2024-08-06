@@ -6,6 +6,7 @@ import model.AuthData;
 import model.GameData;
 import controller.CreateGameRequest;
 import controller.JoinGameRequest;
+import model.UserData;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
