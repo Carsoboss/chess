@@ -8,4 +8,3 @@ public interface AuthDataAccess {
     void deleteAuth(String authToken) throws DataAccessException;
     void deleteAllAuths() throws DataAccessException;
 }
-// Refactor later

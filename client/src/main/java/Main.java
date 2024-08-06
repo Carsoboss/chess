@@ -1,215 +1,149 @@
-package client;
-
+import serverfacade.ServerFacade;
 import model.AuthData;
 import model.GameData;
-import serverfacade.ServerFacade;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
-    private static boolean isRunning;
-    private static AppState state = AppState.PRELOGIN;
+    private static boolean finished;
     private static ServerFacade facade;
     private static Scanner scanner;
     private static String authToken;
-    private static Map<Integer, GameData> currentGames;
+    private static GameData[] currentGames;
 
     public static void main(String[] args) {
-        int port = 8080;
-        facade = new ServerFacade("localhost", port);
+        String serverURL = "http://localhost:8080";
+        if (args.length > 0) {
+            serverURL = args[0];
+        }
+
+        facade = new ServerFacade(serverURL);
         scanner = new Scanner(System.in);
-        currentGames = new HashMap<>();
 
-        System.out.println("Welcome to your Custom Chess Client. Type 'help' to get started.");
+        System.out.println("Welcome to Chess Client. Type 'help' to get started.");
 
-        isRunning = true;
-        while (isRunning) {
-            System.out.print("Enter a command: ");
-            String command = scanner.nextLine().trim().toLowerCase();
-            processCommand(command);
+        finished = false;
+        while (!finished) {
+            String userOption = scanner.nextLine();
+
+            switch (userOption.toLowerCase()) {
+                case "help" -> handleHelp();
+                case "quit" -> handleQuit();
+                case "login" -> handleLogin();
+                case "register" -> handleRegister();
+                case "logout" -> handleLogout();
+                case "create" -> handleCreateGame();
+                case "list" -> handleListGames();
+                case "join" -> handleJoinGame();
+                default -> System.out.println("Unrecognized command. Type 'help' for a list of commands.");
+            }
         }
     }
 
-    private static void processCommand(String command) {
+    private static void handleHelp() {
+        System.out.println("""
+                Available commands:
+                register - Register a new user
+                login - Log in as an existing user
+                logout - Log out the current user
+                create - Create a new game
+                list - List all available games
+                join - Join an existing game
+                quit - Exit the application
+                help - Show this help message
+                """);
+    }
+
+    private static void handleQuit() {
+        System.out.println("Thanks for playing!");
+        finished = true;
+    }
+
+    private static void handleLogin() {
         try {
-            switch (command) {
-                case "help" -> displayHelp();
-                case "quit" -> quitApplication();
-                case "register" -> handleRegister();
-                case "login" -> handleLogin();
-                case "logout" -> handleLogout();
-                case "creategame" -> handleCreateGame();
-                case "listgames" -> handleListGames();
-                case "joingame" -> handleJoinGame();
-                case "cleardatabase" -> handleClearDatabase();
-                default -> System.out.println("Unknown command. Type 'help' for a list of commands.");
+            System.out.print("Username: ");
+            String username = scanner.nextLine();
+            System.out.print("Password: ");
+            String password = scanner.nextLine();
+
+            AuthData auth = facade.login(username, password);
+            authToken = auth.authToken();
+
+            System.out.println("Successfully logged in as " + username);
+        } catch (IOException e) {
+            System.out.println("Login failed: " + e.getMessage());
+        }
+    }
+
+    private static void handleRegister() {
+        try {
+            System.out.print("Username: ");
+            String username = scanner.nextLine();
+            System.out.print("Password: ");
+            String password = scanner.nextLine();
+            System.out.print("Email: ");
+            String email = scanner.nextLine();
+
+            AuthData auth = facade.register(username, password, email);
+            authToken = auth.authToken();
+
+            System.out.println("Successfully registered and logged in as " + username);
+        } catch (IOException e) {
+            System.out.println("Registration failed: " + e.getMessage());
+        }
+    }
+
+    private static void handleLogout() {
+        try {
+            facade.logout(authToken);
+            authToken = null;
+            System.out.println("Successfully logged out.");
+        } catch (IOException e) {
+            System.out.println("Logout failed: " + e.getMessage());
+        }
+    }
+
+    private static void handleCreateGame() {
+        try {
+            System.out.print("Enter game name: ");
+            String gameName = scanner.nextLine();
+
+            facade.createGame(gameName, authToken);
+            System.out.println("Game '" + gameName + "' created successfully.");
+        } catch (IOException e) {
+            System.out.println("Failed to create game: " + e.getMessage());
+        }
+    }
+
+    private static void handleListGames() {
+        try {
+            currentGames = facade.listGames(authToken);
+            if (currentGames.length == 0) {
+                System.out.println("No available games.");
+            } else {
+                for (int i = 0; i < currentGames.length; i++) {
+                    System.out.println((i + 1) + ". " + currentGames[i].gameName());
+                }
             }
         } catch (IOException e) {
-            System.err.println("An error occurred: " + e.getMessage());
+            System.out.println("Failed to list games: " + e.getMessage());
         }
     }
 
-    private static void displayHelp() {
-        String helpText = switch (state) {
-            case PRELOGIN -> """
-                Available commands:
-                - register: Register a new user
-                - login: Log in with an existing user
-                - quit: Exit the application
-                - help: Display this help message
-                """;
-            case POSTLOGIN -> """
-                Available commands:
-                - logout: Log out of your account
-                - creategame: Create a new chess game
-                - listgames: List all available chess games
-                - joingame: Join an existing chess game
-                - cleardatabase: Clear the game database
-                - quit: Exit the application
-                - help: Display this help message
-                """;
-            default -> "Unexpected state. Please restart the application.";
-        };
-        System.out.println(helpText);
-    }
+    private static void handleJoinGame() {
+        try {
+            System.out.print("Enter game number: ");
+            int gameNumber = Integer.parseInt(scanner.nextLine());
 
-    private static void quitApplication() {
-        System.out.println("Thank you for using the Chess Client. Goodbye!");
-        isRunning = false;
-    }
+            System.out.print("Enter player color (WHITE or BLACK): ");
+            String playerColor = scanner.nextLine();
 
-    private static void handleRegister() throws IOException {
-        if (state != AppState.PRELOGIN) {
-            System.out.println("You must be logged out to register.");
-            return;
+            GameData game = currentGames[gameNumber - 1];
+            facade.joinGame(game.gameID(), playerColor, authToken);
+            System.out.println("Successfully joined the game: " + game.gameName());
+        } catch (IOException | NumberFormatException e) {
+            System.out.println("Failed to join game: " + e.getMessage());
         }
-
-        System.out.print("Enter a username: ");
-        String username = scanner.nextLine();
-        System.out.print("Enter a password: ");
-        String password = scanner.nextLine();
-        System.out.print("Enter an email: ");
-        String email = scanner.nextLine();
-
-        AuthData authData = facade.register(username, password, email);
-        if (authData != null) {
-            authToken = authData.authToken();
-            state = AppState.POSTLOGIN;
-            System.out.println("Registration successful. Logged in as " + authData.username());
-        } else {
-            System.out.println("Registration failed. Please try again.");
-        }
-    }
-
-    private static void handleLogin() throws IOException {
-        if (state != AppState.PRELOGIN) {
-            System.out.println("You are already logged in.");
-            return;
-        }
-
-        System.out.print("Enter your username: ");
-        String username = scanner.nextLine();
-        System.out.print("Enter your password: ");
-        String password = scanner.nextLine();
-
-        AuthData authData = facade.login(username, password);
-        if (authData != null) {
-            authToken = authData.authToken();
-            state = AppState.POSTLOGIN;
-            System.out.println("Login successful. Welcome back, " + authData.username());
-        } else {
-            System.out.println("Login failed. Please check your credentials and try again.");
-        }
-    }
-
-    private static void handleLogout() throws IOException {
-        if (state != AppState.POSTLOGIN) {
-            System.out.println("You must be logged in to log out.");
-            return;
-        }
-
-        facade.logout(authToken);
-        authToken = null;
-        state = AppState.PRELOGIN;
-        System.out.println("You have been logged out.");
-    }
-
-    private static void handleCreateGame() throws IOException {
-        if (state != AppState.POSTLOGIN) {
-            System.out.println("You must be logged in to create a game.");
-            return;
-        }
-
-        System.out.print("Enter a name for the game: ");
-        String gameName = scanner.nextLine();
-
-        GameData gameData = facade.createGame(authToken, gameName);
-        if (gameData != null) {
-            System.out.println("Game created: " + gameData.gameName());
-        } else {
-            System.out.println("Failed to create game. Please try again.");
-        }
-    }
-
-    private static void handleListGames() throws IOException {
-        if (state != AppState.POSTLOGIN) {
-            System.out.println("You must be logged in to list games.");
-            return;
-        }
-
-        GameData[] games = facade.listGames(authToken);
-        if (games != null && games.length > 0) {
-            System.out.println("Available games:");
-            for (int i = 0; i < games.length; i++) {
-                GameData game = games[i];
-                currentGames.put(i, game);
-                System.out.println((i + 1) + ". " + game.gameName() + " (ID: " + game.gameID() + ")");
-            }
-        } else {
-            System.out.println("No games available.");
-        }
-    }
-
-    private static void handleJoinGame() throws IOException {
-        if (state != AppState.POSTLOGIN) {
-            System.out.println("You must be logged in to join a game.");
-            return;
-        }
-
-        System.out.print("Enter the number of the game to join: ");
-        int gameNumber = Integer.parseInt(scanner.nextLine()) - 1;
-
-        if (currentGames.containsKey(gameNumber)) {
-            GameData selectedGame = currentGames.get(gameNumber);
-            System.out.print("Enter the color to play as (WHITE/BLACK): ");
-            String playerColor = scanner.nextLine().toUpperCase();
-
-            GameData gameData = facade.joinGame(authToken, playerColor, selectedGame.gameID());
-            if (gameData != null) {
-                System.out.println("Successfully joined the game: " + gameData.gameName());
-            } else {
-                System.out.println("Failed to join game. Please try again.");
-            }
-        } else {
-            System.out.println("Invalid game number.");
-        }
-    }
-
-    private static void handleClearDatabase() throws IOException {
-        if (state != AppState.POSTLOGIN) {
-            System.out.println("You must be logged in to clear the database.");
-            return;
-        }
-
-        facade.clearDatabase();
-        System.out.println("Database cleared successfully.");
-    }
-
-    private enum AppState {
-        PRELOGIN,
-        POSTLOGIN
     }
 }
