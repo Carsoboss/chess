@@ -3,14 +3,17 @@ import model.AuthData;
 import model.GameData;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Main {
     private static boolean finished;
+    private static AppState state = AppState.PRELOGIN;
     private static ServerFacade facade;
     private static Scanner scanner;
     private static String authToken;
-    private static GameData[] currentGames;
+    private static HashMap<Integer, GameData> currGameList;
 
     public static void main(String[] args) {
         String serverURL = "http://localhost:8080";
@@ -28,39 +31,52 @@ public class Main {
             System.out.print("Enter command: ");
             String userOption = scanner.nextLine();
 
-            switch (userOption.toLowerCase()) {
-                case "help" -> handleHelp();
-                case "quit" -> handleQuit();
-                case "login" -> handleLogin();
-                case "register" -> handleRegister();
-                case "logout" -> handleLogout();
-                case "create" -> handleCreateGame();
-                case "list" -> handleListGames();
-                case "join" -> handleJoinGame();
-                default -> System.out.println("Unrecognized command. Type 'help' for a list of commands.");
+            if (Arrays.asList(getUserOptions(state)).contains(userOption.toLowerCase())) {
+                switch (userOption.toLowerCase()) {  // Convert command to lowercase
+                    case "help" -> handleHelp();
+                    case "quit" -> handleQuit();
+                    case "login" -> handleLogin();
+                    case "register" -> handleRegister();
+                    case "logout" -> handleLogout();
+                    case "create" -> handleCreateGame();
+                    case "list" -> handleListGames();
+                    case "play" -> handlePlayGame();
+                    case "observe" -> handleObserveGame();
+                    default -> handleUnrecognizedOption();
+                }
+            } else {
+                handleUnrecognizedOption();
             }
         }
     }
 
     private static void handleHelp() {
-        if (authToken == null) {
-            System.out.println("""
-                    Available commands:
-                    help - Show this help message
-                    register - Register a new user
-                    login - Log in as an existing user
-                    quit - Exit the application
-                    """);
-        } else {
-            System.out.println("""
-                    Available commands:
-                    help - Show this help message
-                    logout - Log out the current user
-                    create - Create a new game
-                    list - List all available games
-                    join - Join an existing game
-                    quit - Exit the application
-                    """);
+        String preLoginHelp = """
+                ----------------------------------------
+                Available commands:
+                register - register new user
+                login - log in existing user
+                quit - exit chess app
+                help - display this help text
+                ----------------------------------------
+                """;
+
+        String postLoginHelp = """
+                ----------------------------------------
+                Available commands:
+                logout - log out current user
+                create - create new game
+                list - list all current games
+                play - play chess
+                observe - observe chess game without joining
+                help - display this help text
+                quit - exit chess app
+                ----------------------------------------
+                """;
+
+        switch (state) {
+            case PRELOGIN -> System.out.print(preLoginHelp);
+            case POSTLOGIN -> System.out.print(postLoginHelp);
         }
     }
 
@@ -78,11 +94,13 @@ public class Main {
 
             AuthData auth = facade.login(username, password);
             authToken = auth.authToken();
+            state = AppState.POSTLOGIN;
 
-            System.out.println("Successfully logged in as " + username);
+            System.out.println("Successfully logged in as " + username + "\n");
         } catch (IOException e) {
-            System.out.println("Login failed: " + e.getMessage());
+            System.out.println("Login failed: " + e.getMessage() + "\n");
         }
+        handleHelp();
     }
 
     private static void handleRegister() {
@@ -96,27 +114,31 @@ public class Main {
 
             AuthData auth = facade.register(username, password, email);
             authToken = auth.authToken();
+            state = AppState.POSTLOGIN;
 
-            System.out.println("Successfully registered and logged in as " + username);
+            System.out.println("Successfully registered and logged in as " + username + "\n");
         } catch (IOException e) {
-            System.out.println("Registration failed: " + e.getMessage());
+            System.out.println("Registration failed: " + e.getMessage() + "\n");
         }
+        handleHelp();
     }
 
     private static void handleLogout() {
         try {
             facade.logout(authToken);
             authToken = null;
-            currentGames = null;
-            System.out.println("Successfully logged out.");
+            currGameList = null;
+            state = AppState.PRELOGIN;
+            System.out.println("Successfully logged out.\n");
         } catch (IOException e) {
-            System.out.println("Logout failed: " + e.getMessage());
+            System.out.println("Logout failed: " + e.getMessage() + "\n");
         }
+        handleHelp();
     }
 
     private static void handleCreateGame() {
         if (authToken == null) {
-            System.out.println("You must be logged in to create a game.");
+            System.out.println("You must be logged in to create a game.\n");
             return;
         }
 
@@ -125,40 +147,44 @@ public class Main {
             String gameName = scanner.nextLine();
 
             facade.createGame(gameName, authToken);
-            System.out.println("Game '" + gameName + "' created successfully.");
+            System.out.println("\nGame '" + gameName + "' created successfully.\n");
         } catch (IOException e) {
-            System.out.println("Failed to create game: " + e.getMessage());
+            System.out.println("Failed to create game: " + e.getMessage() + "\n");
         }
     }
 
     private static void handleListGames() {
         if (authToken == null) {
-            System.out.println("You must be logged in to list games.");
+            System.out.println("You must be logged in to list games.\n");
             return;
         }
 
         try {
-            currentGames = facade.listGames(authToken);
-            if (currentGames.length == 0) {
-                System.out.println("No available games.");
+            currGameList = new HashMap<>();
+            GameData[] games = facade.listGames(authToken);
+            if (games.length == 0) {
+                System.out.println("\nNo available games.\n");
             } else {
-                for (int i = 0; i < currentGames.length; i++) {
-                    System.out.println((i + 1) + ". " + currentGames[i].gameName());
+                System.out.println("\nAvailable games:");
+                for (int i = 0; i < games.length; i++) {
+                    currGameList.put(i, games[i]);
+                    System.out.println((i + 1) + ". " + games[i].gameName());
                 }
+                System.out.println();
             }
         } catch (IOException e) {
-            System.out.println("Failed to list games: " + e.getMessage());
+            System.out.println("Failed to list games: " + e.getMessage() + "\n");
         }
     }
 
-    private static void handleJoinGame() {
+    private static void handlePlayGame() {
         if (authToken == null) {
-            System.out.println("You must be logged in to join a game.");
+            System.out.println("You must be logged in to play a game.\n");
             return;
         }
 
-        if (currentGames == null || currentGames.length == 0) {
-            System.out.println("No games available to join. Please list games first.");
+        if (currGameList == null || currGameList.isEmpty()) {
+            System.out.println("No games available to join. Please list games first.\n");
             return;
         }
 
@@ -167,13 +193,57 @@ public class Main {
             int gameNumber = Integer.parseInt(scanner.nextLine());
 
             System.out.print("Enter player color (WHITE or BLACK): ");
-            String playerColor = scanner.nextLine();
+            String playerColor = scanner.nextLine().toUpperCase();  // Convert input to uppercase
 
-            GameData game = currentGames[gameNumber - 1];
+            GameData game = currGameList.get(gameNumber - 1);
             facade.joinGame(game.gameID(), playerColor, authToken);
-            System.out.println("Successfully joined the game: " + game.gameName());
+            System.out.println("Successfully joined the game: " + game.gameName() + "\n");
+
+            // Here, you would call your method to draw the initial chessboard
+            // drawStartingBoard();
         } catch (IOException | NumberFormatException e) {
-            System.out.println("Failed to join game: " + e.getMessage());
+            System.out.println("Failed to join game: " + e.getMessage() + "\n");
         }
+    }
+
+    private static void handleObserveGame() {
+        if (authToken == null) {
+            System.out.println("You must be logged in to observe a game.\n");
+            return;
+        }
+
+        if (currGameList == null || currGameList.isEmpty()) {
+            System.out.println("No games available to observe. Please list games first.\n");
+            return;
+        }
+
+        try {
+            System.out.print("Enter game number: ");
+            int gameNumber = Integer.parseInt(scanner.nextLine());
+
+            GameData game = currGameList.get(gameNumber - 1);
+            System.out.println("Observing the game: " + game.gameName() + "\n");
+
+            // Here, you would call your method to draw the initial chessboard
+            // drawStartingBoard();
+        } catch (NumberFormatException e) {
+            System.out.println("Failed to observe game: " + e.getMessage() + "\n");
+        }
+    }
+
+    private static void handleUnrecognizedOption() {
+        System.out.println("Command not recognized. Type 'help' for a list of commands.\n");
+    }
+
+    private enum AppState {
+        PRELOGIN,
+        POSTLOGIN
+    }
+
+    private static String[] getUserOptions(AppState state) {
+        return switch (state) {
+            case PRELOGIN -> new String[]{"help", "quit", "login", "register"};
+            case POSTLOGIN -> new String[]{"help", "logout", "create", "list", "play", "observe", "quit"};
+        };
     }
 }

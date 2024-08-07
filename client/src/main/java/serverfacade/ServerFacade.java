@@ -2,6 +2,7 @@ package serverfacade;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import model.AuthData;
 import model.GameData;
@@ -66,12 +67,27 @@ public class ServerFacade {
         String route = "/game";
         HttpURLConnection connection = getHTTPConnection(requestType, route, authToken);
 
+        // Reading and printing the raw response for debugging
+        InputStream responseBody = connection.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody));
+        StringBuilder responseString = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            responseString.append(line);
+        }
+        System.out.println("Raw Server Response: " + responseString);
+
         try {
-            return handleRequest(connection, null, GameData[].class);
+            // Parse the response as a JsonObject
+            JsonObject responseObject = gson.fromJson(responseString.toString(), JsonObject.class);
+
+            // Extract the "games" array from the response object
+            GameData[] games = gson.fromJson(responseObject.get("games"), GameData[].class);
+            System.out.println("Successfully listed games.");
+            return games;
         } catch (JsonSyntaxException e) {
-            System.err.println("Failed to parse response as array, trying as single object...");
-            GameData singleGame = handleRequest(connection, null, GameData.class);
-            return new GameData[]{singleGame};
+            System.err.println("Failed to parse response as array: " + e.getMessage());
+            throw new IOException("Failed to parse server response.", e);
         }
     }
 
@@ -79,6 +95,9 @@ public class ServerFacade {
         String requestType = "PUT";
         String route = "/game";
         HttpURLConnection connection = getHTTPConnection(requestType, route, authToken);
+
+        // Convert player color to uppercase to ensure consistency
+        playerColor = playerColor.toUpperCase();
 
         GameData joinInfo = new GameData(gameID,
                 "WHITE".equals(playerColor) ? authToken : null,
