@@ -1,17 +1,21 @@
 package serverfacade;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerFacade {
     private final String serverURL;
@@ -45,7 +49,7 @@ public class ServerFacade {
         String route = "/session";
         HttpURLConnection connection = getHTTPConnection(requestType, route, authToken);
 
-        handleRequest(connection, null, Void.class);
+        handleRequest(connection, null, Map.class);  // Expecting a success message from server
     }
 
     public GameData createGame(String gameName, String authToken) throws IOException {
@@ -62,7 +66,13 @@ public class ServerFacade {
         String route = "/game";
         HttpURLConnection connection = getHTTPConnection(requestType, route, authToken);
 
-        return handleRequest(connection, null, GameData[].class);
+        try {
+            return handleRequest(connection, null, GameData[].class);
+        } catch (JsonSyntaxException e) {
+            System.err.println("Failed to parse response as array, trying as single object...");
+            GameData singleGame = handleRequest(connection, null, GameData.class);
+            return new GameData[]{singleGame};
+        }
     }
 
     public void joinGame(int gameID, String playerColor, String authToken) throws IOException {
@@ -75,7 +85,15 @@ public class ServerFacade {
                 "BLACK".equals(playerColor) ? authToken : null,
                 null, null);
 
-        handleRequest(connection, joinInfo, Void.class);
+        handleRequest(connection, joinInfo, Map.class);  // Expecting a success message from server
+    }
+
+    public Map<String, Object> clear() throws IOException {
+        String requestType = "DELETE";
+        String route = "/db";
+        HttpURLConnection connection = getHTTPConnection(requestType, route, null);
+
+        return handleRequest(connection, null, HashMap.class);
     }
 
     private HttpURLConnection getHTTPConnection(String httpType, String route, String authToken) throws IOException {
@@ -103,13 +121,28 @@ public class ServerFacade {
         }
 
         int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (InputStream responseBody = connection.getInputStream()) {
-                InputStreamReader reader = new InputStreamReader(responseBody);
-                return gson.fromJson(reader, responseClass);
-            }
-        } else {
+        InputStream responseBody = responseCode == HttpURLConnection.HTTP_OK ? connection.getInputStream() : connection.getErrorStream();
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody));
+        StringBuilder responseString = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            responseString.append(line);
+        }
+
+        System.out.println("Server Response: " + responseString);
+
+        T response;
+        try {
+            response = gson.fromJson(responseString.toString(), responseClass);
+        } catch (JsonIOException | JsonSyntaxException e) {
+            throw new IOException("Failed to parse server response.", e);
+        }
+
+        if (responseCode != HttpURLConnection.HTTP_OK) {
             throw new IOException("HTTP request failed with status " + responseCode);
         }
+
+        return response;
     }
 }

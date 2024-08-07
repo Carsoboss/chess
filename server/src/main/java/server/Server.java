@@ -13,14 +13,12 @@ public class Server {
     private final GameService gameService;
     private final ClearService clearService;
 
-    // Existing constructor with arguments
     public Server(UserService userService, GameService gameService, ClearService clearService) {
         this.userService = userService;
         this.gameService = gameService;
         this.clearService = clearService;
     }
 
-    // New no-argument constructor for testing purposes
     public Server() {
         UserDataAccess userDataAccess = new MySQLUserDataAccess();
         AuthDataAccess authDataAccess = new MySQLAuthDataAccess();
@@ -32,14 +30,12 @@ public class Server {
 
     public int run(int desiredPort) {
         try {
-            // Ensure the database and tables are created before starting the server
             DatabaseManager.createDatabase();
             DatabaseManager.createTablesIfNotExists();
 
             Spark.port(desiredPort);
             Spark.staticFiles.externalLocation("C:/Users/carso/Code/personal/school/chess/server/src/main/resources/web");
 
-            // Register routes and handlers
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
             Spark.post("/session", (req, res) -> new LoginController(userService).handleLogin(req, res));
             Spark.delete("/session", (req, res) -> new LogoutController(userService).handleLogout(req, res));
@@ -48,7 +44,6 @@ public class Server {
             Spark.put("/game", (req, res) -> new JoinGameController(gameService).handleJoinGame(req, res));
             Spark.delete("/db", (req, res) -> new ClearDatabaseController(clearService).handleClearDatabase(req, res));
 
-            // Global Exception Handler for DataAccessException
             Spark.exception(DataAccessException.class, (ex, req, res) -> {
                 if (ex.getMessage().contains("Unauthorized")) {
                     res.status(401);

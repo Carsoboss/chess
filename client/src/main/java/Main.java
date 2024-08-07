@@ -25,6 +25,7 @@ public class Main {
 
         finished = false;
         while (!finished) {
+            System.out.print("Enter command: ");
             String userOption = scanner.nextLine();
 
             switch (userOption.toLowerCase()) {
@@ -42,17 +43,25 @@ public class Main {
     }
 
     private static void handleHelp() {
-        System.out.println("""
-                Available commands:
-                register - Register a new user
-                login - Log in as an existing user
-                logout - Log out the current user
-                create - Create a new game
-                list - List all available games
-                join - Join an existing game
-                quit - Exit the application
-                help - Show this help message
-                """);
+        if (authToken == null) {
+            System.out.println("""
+                    Available commands:
+                    help - Show this help message
+                    register - Register a new user
+                    login - Log in as an existing user
+                    quit - Exit the application
+                    """);
+        } else {
+            System.out.println("""
+                    Available commands:
+                    help - Show this help message
+                    logout - Log out the current user
+                    create - Create a new game
+                    list - List all available games
+                    join - Join an existing game
+                    quit - Exit the application
+                    """);
+        }
     }
 
     private static void handleQuit() {
@@ -98,6 +107,7 @@ public class Main {
         try {
             facade.logout(authToken);
             authToken = null;
+            currentGames = null;
             System.out.println("Successfully logged out.");
         } catch (IOException e) {
             System.out.println("Logout failed: " + e.getMessage());
@@ -105,6 +115,11 @@ public class Main {
     }
 
     private static void handleCreateGame() {
+        if (authToken == null) {
+            System.out.println("You must be logged in to create a game.");
+            return;
+        }
+
         try {
             System.out.print("Enter game name: ");
             String gameName = scanner.nextLine();
@@ -117,6 +132,11 @@ public class Main {
     }
 
     private static void handleListGames() {
+        if (authToken == null) {
+            System.out.println("You must be logged in to list games.");
+            return;
+        }
+
         try {
             currentGames = facade.listGames(authToken);
             if (currentGames.length == 0) {
@@ -132,6 +152,16 @@ public class Main {
     }
 
     private static void handleJoinGame() {
+        if (authToken == null) {
+            System.out.println("You must be logged in to join a game.");
+            return;
+        }
+
+        if (currentGames == null || currentGames.length == 0) {
+            System.out.println("No games available to join. Please list games first.");
+            return;
+        }
+
         try {
             System.out.print("Enter game number: ");
             int gameNumber = Integer.parseInt(scanner.nextLine());
