@@ -1,6 +1,7 @@
 package serverfacade;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -14,9 +15,11 @@ import java.net.URL;
 
 public class ServerFacade {
     private final String serverURL;
+    private final Gson gson;
 
     public ServerFacade(String serverURL) {
         this.serverURL = serverURL;
+        this.gson = new Gson();
     }
 
     public AuthData register(String username, String password, String email) throws IOException {
@@ -94,20 +97,19 @@ public class ServerFacade {
         if (request != null) {
             connection.setRequestProperty("Content-Type", "application/json");
             try (OutputStream requestBody = connection.getOutputStream()) {
-                Gson gson = new Gson();
                 String jsonBody = gson.toJson(request);
                 requestBody.write(jsonBody.getBytes());
             }
         }
 
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
             try (InputStream responseBody = connection.getInputStream()) {
                 InputStreamReader reader = new InputStreamReader(responseBody);
-                Gson gson = new Gson();
                 return gson.fromJson(reader, responseClass);
             }
         } else {
-            throw new IOException("HTTP request failed with status " + connection.getResponseCode());
+            throw new IOException("HTTP request failed with status " + responseCode);
         }
     }
 }
