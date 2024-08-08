@@ -98,14 +98,18 @@ public class ServerFacade {
 
         // Convert player color to uppercase to ensure consistency
         playerColor = playerColor.toUpperCase();
+        System.out.println("Debug: Preparing to send color " + playerColor + " in the join game request.");
 
         GameData joinInfo = new GameData(gameID,
                 "WHITE".equals(playerColor) ? authToken : null,
                 "BLACK".equals(playerColor) ? authToken : null,
                 null, null);
 
+        System.out.println("Debug: GameData prepared with GameID: " + gameID + ", PlayerColor: " + playerColor);
+
         handleRequest(connection, joinInfo, Map.class);  // Expecting a success message from server
     }
+
 
     public Map<String, Object> clear() throws IOException {
         String requestType = "DELETE";

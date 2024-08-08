@@ -17,7 +17,10 @@ public class DatabaseManager {
     static {
         try {
             // Load the db.properties file
-            try (var propStream = new FileInputStream("C:/Users/carso/Code/personal/school/chess/server/src/main/resources/db.properties")) {
+            try (var propStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("db.properties")) {
+                if (propStream == null) {
+                    throw new Exception("Unable to load db.properties");
+                }
                 Properties props = new Properties();
                 props.load(propStream);
 

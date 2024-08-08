@@ -1,6 +1,7 @@
 import serverfacade.ServerFacade;
 import model.AuthData;
 import model.GameData;
+import ui.EscapeSequences;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -32,7 +33,7 @@ public class Main {
             String userOption = scanner.nextLine();
 
             if (Arrays.asList(getUserOptions(state)).contains(userOption.toLowerCase())) {
-                switch (userOption.toLowerCase()) {  // Convert command to lowercase
+                switch (userOption.toLowerCase()) {
                     case "help" -> handleHelp();
                     case "quit" -> handleQuit();
                     case "login" -> handleLogin();
@@ -193,14 +194,15 @@ public class Main {
             int gameNumber = Integer.parseInt(scanner.nextLine());
 
             System.out.print("Enter player color (WHITE or BLACK): ");
-            String playerColor = scanner.nextLine().toUpperCase();  // Convert input to uppercase
+            String playerColor = scanner.nextLine().toUpperCase();
 
             GameData game = currGameList.get(gameNumber - 1);
             facade.joinGame(game.gameID(), playerColor, authToken);
             System.out.println("Successfully joined the game: " + game.gameName() + "\n");
 
-            // Here, you would call your method to draw the initial chessboard
-            // drawStartingBoard();
+            drawChessBoard(playerColor); // Draw board with player's perspective
+            drawChessBoard("BLACK".equals(playerColor) ? "WHITE" : "BLACK"); // Draw board from opponent's perspective
+
         } catch (IOException | NumberFormatException e) {
             System.out.println("Failed to join game: " + e.getMessage() + "\n");
         }
@@ -224,8 +226,9 @@ public class Main {
             GameData game = currGameList.get(gameNumber - 1);
             System.out.println("Observing the game: " + game.gameName() + "\n");
 
-            // Here, you would call your method to draw the initial chessboard
-            // drawStartingBoard();
+            drawChessBoard("WHITE"); // Draw board from white's perspective
+            drawChessBoard("BLACK"); // Draw board from black's perspective
+
         } catch (NumberFormatException e) {
             System.out.println("Failed to observe game: " + e.getMessage() + "\n");
         }
@@ -235,15 +238,46 @@ public class Main {
         System.out.println("Command not recognized. Type 'help' for a list of commands.\n");
     }
 
-    private enum AppState {
-        PRELOGIN,
-        POSTLOGIN
-    }
-
     private static String[] getUserOptions(AppState state) {
         return switch (state) {
             case PRELOGIN -> new String[]{"help", "quit", "login", "register"};
             case POSTLOGIN -> new String[]{"help", "logout", "create", "list", "play", "observe", "quit"};
         };
+    }
+
+    private static void drawChessBoard(String orientation) {
+        String[] columns = {"a", "b", "c", "d", "e", "f", "g", "h"};
+        String[] rows = {"1", "2", "3", "4", "5", "6", "7", "8"};
+
+        if ("BLACK".equalsIgnoreCase(orientation)) {
+            columns = reverseArray(columns);
+            rows = reverseArray(rows);
+        }
+
+        System.out.println("  " + String.join(" ", columns));
+        for (int i = 0; i < 8; i++) {
+            System.out.print(rows[i] + " ");
+            for (int j = 0; j < 8; j++) {
+                boolean isLightSquare = (i + j) % 2 == 0;
+                String squareColor = isLightSquare ? EscapeSequences.SET_BG_COLOR_LIGHT_GREY : EscapeSequences.SET_BG_COLOR_DARK_GREY;
+                String piece = EscapeSequences.EMPTY; // Initially, we can leave all squares empty.
+                System.out.print(squareColor + piece + EscapeSequences.RESET_BG_COLOR);
+            }
+            System.out.println(" " + rows[i]);
+        }
+        System.out.println("  " + String.join(" ", columns));
+    }
+
+    private static String[] reverseArray(String[] array) {
+        String[] reversedArray = new String[array.length];
+        for (int i = 0; i < array.length; i++) {
+            reversedArray[i] = array[array.length - 1 - i];
+        }
+        return reversedArray;
+    }
+
+    private enum AppState {
+        PRELOGIN,
+        POSTLOGIN
     }
 }

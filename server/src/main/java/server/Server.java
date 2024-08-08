@@ -34,7 +34,7 @@ public class Server {
             DatabaseManager.createTablesIfNotExists();
 
             Spark.port(desiredPort);
-            Spark.staticFiles.externalLocation("C:/Users/carso/Code/personal/school/chess/server/src/main/resources/web");
+            Spark.staticFiles.location("web");
 
             Spark.post("/user", (req, res) -> new RegisterController(userService).handleRegister(req, res));
             Spark.post("/session", (req, res) -> new LoginController(userService).handleLogin(req, res));
