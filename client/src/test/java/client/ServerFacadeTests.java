@@ -147,4 +147,23 @@ public class ServerFacadeTests {
     @Test
     void deleteGameTest() {
     }
+    @Test
+    void addUserTest() {
+    }
+
+    @Test
+    void addUserTest() {
+    }
+
+    @Test
+    void addPasswordTest() {
+    }
+
+    @Test
+    void addEmailTest() {
+    }
+
+    @Test
+    void addGameTest() {
+    }
 }
